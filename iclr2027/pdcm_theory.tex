@@ -1,0 +1,477 @@
+% Fragment: \input{pdcm_theory} from the main document.
+% Requires in the preamble of the including file:
+%   \usepackage{amsthm,mathtools}
+%   \newtheorem{assumption}{Assumption}
+%   \newtheorem{lemma}{Lemma}
+%   \newtheorem{theorem}{Theorem}
+%   \newtheorem{corollary}{Corollary}
+%   \newtheorem{remark}{Remark}
+%   \newcommand{\DeltaK}{\Delta_K}
+%   \newcommand{\one}{\mathbf{1}}
+%   \newcommand{\pos}[1]{\left[#1\right]_+}
+%   \newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+%   \newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+% \R and \KL come from math_commands.tex (lines 480, 488).
+
+\section{Theory}
+
+\subsection{Problem formulation and idealized PDCM}
+
+We consider $K\ge 2$ training tasks. At round $t$, the controller chooses an allocation
+\[
+    p_t=(p_{t,1},\ldots,p_{t,K})\in
+    \DeltaK
+    \coloneqq
+    \left\{p\in\R_+^K:\sum_{k=1}^K p_k=1\right\}.
+\]
+The uniform allocation is denoted by $u\coloneqq 1/K$. For task $k$, let
+$U_{t,k}:[0,1]\to\R$ denote the expected one-step policy improvement produced by assigning fraction $p_k$ of the current training batch to that task. We use the separable aggregate utility
+\begin{equation}
+    F_t(p) \coloneqq \sum_{k=1}^K U_{t,k}(p_k).
+    \label{eq:aggregate-utility}
+\end{equation}
+The analysis treats the marginal-utility signal as directly available after round $t$,
+\begin{equation}
+    g_{t,k}\coloneqq U_{t,k}'(p_{t,k}),
+    \qquad
+    g_t=(g_{t,1},\ldots,g_{t,K}).
+    \label{eq:marginal-utility}
+\end{equation}
+Thus the theory does not model how $g_t$ is estimated from finite windows. Dithering and slope damping are also omitted. These choices isolate the online optimization part of PDCM.
+
+The safety target compares each task with the uniform-allocation counterfactual. Given a tolerance $\varepsilon_k\ge 0$, define the true one-step lag residual
+\begin{equation}
+    r_{t,k}(p_{t,k})
+    \coloneqq
+    U_{t,k}(u)-U_{t,k}(p_{t,k})-\varepsilon_k.
+    \label{eq:true-residual}
+\end{equation}
+A positive value means that task $k$ falls behind its uniform-allocation counterfactual by more than the allowed tolerance. The desired long-run requirement is
+\begin{equation}
+    \limsup_{T\to\infty}
+    \frac{1}{T}\sum_{t=1}^T r_{t,k}(p_{t,k})
+    \le 0,
+    \qquad k\in[K].
+    \label{eq:long-run-safety}
+\end{equation}
+
+We make the following regularity assumptions.
+
+\begin{assumption}[Concave task response]
+\label{ass:concavity}
+For every $t$ and $k$, $U_{t,k}$ is differentiable and concave on $[0,1]$.
+\end{assumption}
+
+\begin{assumption}[Bounded marginal utility]
+\label{ass:bounded-gradient}
+There exists $G<\infty$ such that $|g_{t,k}|\le G$ for every $t$ and $k$. Let
+$E\coloneqq \max_k\varepsilon_k$ and $H\coloneqq G+E$.
+\end{assumption}
+
+Concavity turns the unobserved uniform counterfactual into a first-order upper bound.
+
+\begin{lemma}[Tangent safety bound]
+\label{lem:tangent}
+Under Assumption~\ref{ass:concavity}, for every round $t$ and task $k$,
+\begin{equation}
+    r_{t,k}(p_{t,k})
+    \le
+    g_{t,k}(u-p_{t,k})-\varepsilon_k.
+    \label{eq:tangent-bound}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+Concavity of $U_{t,k}$ gives the supporting-hyperplane inequality
+\[
+    U_{t,k}(u)
+    \le
+    U_{t,k}(p_{t,k})
+    +U_{t,k}'(p_{t,k})(u-p_{t,k}).
+\]
+Subtracting $U_{t,k}(p_{t,k})+\varepsilon_k$ from both sides and using
+$g_{t,k}=U_{t,k}'(p_{t,k})$ proves \eqref{eq:tangent-bound}.
+\end{proof}
+
+Motivated by Lemma~\ref{lem:tangent}, define the affine first-order safety residual
+\begin{equation}
+    h_{t,k}(p)
+    \coloneqq
+    g_{t,k}(u-p_k)-\varepsilon_k,
+    \qquad
+    h_t(p)=(h_{t,1}(p),\ldots,h_{t,K}(p)).
+    \label{eq:surrogate-residual}
+\end{equation}
+Only $h_t(p_t)$ is used as a certificate for the true lag at round $t$. Its extension to arbitrary $p$ is useful for defining the online linearized problem. In particular, define the set of fixed allocations that are safe for every observed first-order constraint,
+\begin{equation}
+    \mathcal P_T
+    \coloneqq
+    \left\{p\in\DeltaK:
+    h_{t,k}(p)\le 0
+    \ \text{for all }t\le T,\ k\in[K]\right\}.
+    \label{eq:safe-comparator-set}
+\end{equation}
+This set is nonempty because the uniform allocation satisfies
+$h_{t,k}(u)=-\varepsilon_k\le 0$ for every $t,k$.
+
+For the online update, constants independent of $p$ can be dropped from the local first-order model of $F_t$. The resulting round-$t$ linearized Lagrangian is
+\begin{equation}
+    \mathcal L_t(p,\lambda)
+    \coloneqq
+    \ip{g_t}{p}-\ip{\lambda}{h_t(p)},
+    \qquad \lambda\in\R_+^K.
+    \label{eq:linearized-lagrangian}
+\end{equation}
+Its primal gradient is
+\begin{equation}
+    \nabla_p\mathcal L_t(p,\lambda)
+    =(\one+\lambda)\odot g_t,
+    \label{eq:dual-weighted-gradient}
+\end{equation}
+where $\odot$ denotes coordinatewise multiplication. Its dual gradient is
+$\nabla_\lambda\mathcal L_t(p,\lambda)=-h_t(p)$.
+
+The idealized PDCM recursion is therefore
+\begin{align}
+    p_{t+1}
+    &\coloneqq
+    \arg\max_{p\in\DeltaK}
+    \left\{
+        \eta_p\ip{(\one+\lambda_t)\odot g_t}{p}
+        -\KL(p\|p_t)
+    \right\},
+    \label{eq:primal-md}\\
+    \lambda_{t+1}
+    &\coloneqq
+    \left[\lambda_t+\eta_d h_t(p_t)\right]_+,
+    \label{eq:dual-update}
+\end{align}
+with $p_1=(u,\ldots,u)$ and $\lambda_1=0$. Here $[\cdot]_+$ is coordinatewise projection onto $\R_+^K$. The primal problem \eqref{eq:primal-md} has the closed form
+\begin{equation}
+    p_{t+1,k}
+    =
+    \frac{p_{t,k}
+    \exp\!\left(\eta_p(1+\lambda_{t,k})g_{t,k}\right)}
+    {\sum_{j=1}^K p_{t,j}
+    \exp\!\left(\eta_p(1+\lambda_{t,j})g_{t,j}\right)}.
+    \label{eq:exp-gradient}
+\end{equation}
+Thus PDCM is entropic mirror ascent in the allocation variable and projected gradient ascent on the safety residual in the dual variable.
+
+For a horizon $T$, define the realized dual magnitude
+\begin{equation}
+    \Lambda_T\coloneqq
+    \max_{1\le t\le T+1}\norm{\lambda_t}_\infty.
+    \label{eq:realized-dual-bound}
+\end{equation}
+No boundedness assumption is needed for the finite-horizon inequalities below; the quantity $\Lambda_T$ simply records the largest multiplier generated by the recursion. To obtain an $O(\sqrt T)$ asymptotic rate, we will use the standard dual-stability condition $\sup_T\Lambda_T<\infty$.
+
+\subsection{PDCM constrained no-regret theorem}
+
+For any comparator $p\in\mathcal P_T$, define its cumulative utility regret
+\begin{equation}
+    R_T(p)
+    \coloneqq
+    \sum_{t=1}^T\left(F_t(p)-F_t(p_t)\right).
+    \label{eq:regret}
+\end{equation}
+The theorem below controls both this regret and the cumulative violation of the true uniform-baseline lag constraints.
+
+\begin{theorem}[Constrained no-regret of idealized PDCM]
+\label{thm:no-regret}
+Suppose Assumptions~\ref{ass:concavity}--\ref{ass:bounded-gradient} hold, and let the iterates be generated by \eqref{eq:primal-md}--\eqref{eq:dual-update}. Then, for every horizon $T\ge1$, every $p\in\mathcal P_T$, and every $\eta_p,\eta_d>0$,
+\begin{equation}
+    R_T(p)
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}G^2(1+\Lambda_T)^2
+    +\frac{\eta_d T}{2}K H^2.
+    \label{eq:regret-bound-general}
+\end{equation}
+Moreover, for every task $k$,
+\begin{equation}
+    \pos{\sum_{t=1}^T r_{t,k}(p_{t,k})}
+    \le
+    \pos{\sum_{t=1}^T h_{t,k}(p_t)}
+    \le
+    \frac{\Lambda_T}{\eta_d}.
+    \label{eq:violation-bound-general}
+\end{equation}
+
+In particular, suppose the dual sequence is stable: $\Lambda_T\le\Lambda$ for all $T$, for some finite $\Lambda>0$. With
+\begin{equation}
+    \eta_p
+    =
+    \frac{\sqrt{2\log K}}
+    {G(1+\Lambda)\sqrt T},
+    \qquad
+    \eta_d
+    =
+    \frac{\Lambda}{H\sqrt{KT}},
+    \label{eq:step-sizes}
+\end{equation}
+we have
+\begin{equation}
+    R_T(p)
+    \le
+    G(1+\Lambda)\sqrt{2T\log K}
+    +\frac{\Lambda H}{2}\sqrt{KT},
+    \label{eq:regret-rate}
+\end{equation}
+for every $p\in\mathcal P_T$, and
+\begin{equation}
+    \pos{\sum_{t=1}^T r_{t,k}(p_{t,k})}
+    \le H\sqrt{KT}
+    \qquad\text{for every }k.
+    \label{eq:violation-rate}
+\end{equation}
+Consequently, both average regret and average constraint violation vanish at rate $O(T^{-1/2})$.
+\end{theorem}
+
+\begin{proof}
+Set
+\[
+    q_t\coloneqq(\one+\lambda_t)\odot g_t.
+\]
+We first establish the entropic mirror-ascent inequality. The optimality condition for \eqref{eq:primal-md}, together with the three-point identity for the Kullback--Leibler divergence, gives, for every $p\in\DeltaK$,
+\begin{equation}
+    \eta_p\ip{q_t}{p-p_{t+1}}
+    \le
+    \KL(p\|p_t)-\KL(p\|p_{t+1})-\KL(p_{t+1}\|p_t).
+    \label{eq:three-point}
+\end{equation}
+Adding $\eta_p\ip{q_t}{p_{t+1}-p_t}$ to both sides, using
+$\ip{q_t}{p_{t+1}-p_t}\le
+\norm{q_t}_\infty\norm{p_{t+1}-p_t}_1$, and applying Pinsker's inequality
+$\KL(p_{t+1}\|p_t)\ge \frac12\norm{p_{t+1}-p_t}_1^2$, we obtain
+\begin{equation}
+    \ip{q_t}{p-p_t}
+    \le
+    \frac{\KL(p\|p_t)-\KL(p\|p_{t+1})}{\eta_p}
+    +\frac{\eta_p}{2}\norm{q_t}_\infty^2.
+    \label{eq:mirror-one-step}
+\end{equation}
+Summing over $t$ and using $p_1=(u,\ldots,u)$ yields
+\begin{equation}
+    \sum_{t=1}^T\ip{q_t}{p-p_t}
+    \le
+    \frac{\KL(p\|p_1)}{\eta_p}
+    +\frac{\eta_p}{2}\sum_{t=1}^T\norm{q_t}_\infty^2
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}G^2(1+\Lambda_T)^2.
+    \label{eq:primal-regret}
+\end{equation}
+The last inequality follows from
+$\KL(p\|p_1)=\sum_k p_k\log(Kp_k)\le\log K$ and
+$\norm{q_t}_\infty\le G(1+\Lambda_T)$.
+
+The affine residual \eqref{eq:surrogate-residual} satisfies
+\begin{equation}
+    h_t(p_t)-h_t(p)=g_t\odot(p-p_t).
+    \label{eq:h-difference}
+\end{equation}
+Hence
+\begin{align}
+    \ip{q_t}{p-p_t}
+    &=\ip{g_t}{p-p_t}
+      +\ip{\lambda_t}{g_t\odot(p-p_t)}\\
+    &=\ip{g_t}{p-p_t}
+      +\ip{\lambda_t}{h_t(p_t)-h_t(p)}.
+    \label{eq:primal-expand}
+\end{align}
+For $p\in\mathcal P_T$, $h_t(p)\le0$ coordinatewise, while $\lambda_t\ge0$. Therefore \eqref{eq:primal-regret} and \eqref{eq:primal-expand} imply
+\begin{equation}
+    \sum_{t=1}^T\ip{g_t}{p-p_t}
+    +\sum_{t=1}^T\ip{\lambda_t}{h_t(p_t)}
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}G^2(1+\Lambda_T)^2.
+    \label{eq:primal-with-dual}
+\end{equation}
+
+We next control the second term. Since Euclidean projection onto $\R_+^K$ is nonexpansive and $0\in\R_+^K$, the dual recursion gives
+\begin{align}
+    \norm{\lambda_{t+1}}_2^2
+    &\le
+    \norm{\lambda_t+\eta_d h_t(p_t)}_2^2\\
+    &=\norm{\lambda_t}_2^2
+      +2\eta_d\ip{\lambda_t}{h_t(p_t)}
+      +\eta_d^2\norm{h_t(p_t)}_2^2.
+    \label{eq:dual-square}
+\end{align}
+Rearranging and summing from $1$ to $T$, with $\lambda_1=0$, yields
+\begin{equation}
+    -\sum_{t=1}^T\ip{\lambda_t}{h_t(p_t)}
+    \le
+    \frac{\eta_d}{2}\sum_{t=1}^T\norm{h_t(p_t)}_2^2.
+    \label{eq:dual-inner-product}
+\end{equation}
+Because $|u-p_{t,k}|\le1$, Assumption~\ref{ass:bounded-gradient} gives
+$|h_{t,k}(p_t)|\le G+\varepsilon_k\le H$, and therefore
+$\norm{h_t(p_t)}_2^2\le K H^2$. Combining
+\eqref{eq:primal-with-dual} and \eqref{eq:dual-inner-product} gives
+\begin{equation}
+    \sum_{t=1}^T\ip{g_t}{p-p_t}
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}G^2(1+\Lambda_T)^2
+    +\frac{\eta_d T}{2}K H^2.
+    \label{eq:linear-regret-bound}
+\end{equation}
+Concavity of $F_t$ implies
+\[
+    F_t(p)-F_t(p_t)
+    \le
+    \ip{\nabla F_t(p_t)}{p-p_t}
+    =\ip{g_t}{p-p_t}.
+\]
+Summing this inequality and applying \eqref{eq:linear-regret-bound} proves
+\eqref{eq:regret-bound-general}.
+
+It remains to prove the constraint bound. Coordinatewise, \eqref{eq:dual-update} gives
+\[
+    \lambda_{t+1,k}
+    =\max\{0,\lambda_{t,k}+\eta_d h_{t,k}(p_t)\}
+    \ge
+    \lambda_{t,k}+\eta_d h_{t,k}(p_t).
+\]
+Summing over $t$ and using $\lambda_{1,k}=0$ gives
+\begin{equation}
+    \lambda_{T+1,k}
+    \ge
+    \eta_d\sum_{t=1}^T h_{t,k}(p_t).
+    \label{eq:queue-telescope}
+\end{equation}
+Taking positive parts and using
+$\lambda_{T+1,k}\le\Lambda_T$ yields
+\[
+    \pos{\sum_{t=1}^T h_{t,k}(p_t)}
+    \le \frac{\Lambda_T}{\eta_d}.
+\]
+Lemma~\ref{lem:tangent} gives
+$r_{t,k}(p_{t,k})\le h_{t,k}(p_t)$ at every round, so summation and monotonicity of $[\cdot]_+$ prove \eqref{eq:violation-bound-general}.
+
+Finally, under $\Lambda_T\le\Lambda$, substituting \eqref{eq:step-sizes} into
+\eqref{eq:regret-bound-general} gives \eqref{eq:regret-rate}, while
+\eqref{eq:violation-bound-general} gives \eqref{eq:violation-rate}. Dividing by $T$ proves the stated $O(T^{-1/2})$ average rates.
+\end{proof}
+
+\begin{corollary}[Uniform-baseline guarantee]
+\label{cor:uniform}
+Because $u\one\in\mathcal P_T$, Theorem~\ref{thm:no-regret} applies in particular to uniform allocation. Under dual stability and the step sizes in \eqref{eq:step-sizes},
+\[
+    \sum_{t=1}^T F_t(u\one)-\sum_{t=1}^T F_t(p_t)=O(\sqrt T),
+\]
+while, for every task $k$,
+\[
+    \frac1T\sum_{t=1}^T
+    \left(U_{t,k}(u)-U_{t,k}(p_{t,k})\right)
+    \le
+    \varepsilon_k+O(T^{-1/2}).
+\]
+Thus PDCM can improve the aggregate allocation objective without asymptotically sacrificing any task relative to the prescribed uniform-allocation tolerance.
+\end{corollary}
+
+\begin{remark}[What the dual-stability condition means]
+The finite-horizon bounds \eqref{eq:regret-bound-general}--\eqref{eq:violation-bound-general} are valid for the realized value $\Lambda_T$ without any extra assumption. The $O(\sqrt T)$ rates require $\Lambda_T=O(1)$. This condition states that the safety multipliers do not diverge. It can be checked empirically for a run, assumed as a stability property of the idealized dynamics, or enforced by a sufficiently large upper projection provided that the projection is inactive on the trajectory being analyzed. The theorem does not infer such stability from the nonstationary training dynamics.
+\end{remark}
+
+\subsection{Dual-weighted marginal-utility matching}
+
+The no-regret result is a finite-time statement. A separate stationary characterization explains the allocation toward which the primal update is driven when the utility curves stop changing. Let $U_k:[0,1]\to\R$ be differentiable and concave, let
+$F(p)=\sum_k U_k(p_k)$, and consider the static constrained allocation problem
+\begin{equation}
+\begin{aligned}
+    \max_{p\in\DeltaK}\quad
+    &\sum_{k=1}^K U_k(p_k)\\
+    \text{subject to}\quad
+    &U_k(u)-U_k(p_k)-\varepsilon_k\le0,
+      \qquad k\in[K].
+\end{aligned}
+\label{eq:static-program}
+\end{equation}
+Because $-U_k$ is convex, each lag constraint is convex; hence
+\eqref{eq:static-program} is a concave maximization problem over a convex feasible set.
+
+\begin{theorem}[Dual-weighted marginal-utility matching]
+\label{thm:matching}
+Assume that the static problem \eqref{eq:static-program} satisfies Slater's condition, and let $(p^*,\lambda^*)$ be a primal--dual optimum. Define
+$g_k^*\coloneqq U_k'(p_k^*)$. If $p_k^*>0$ for every $k$, then there exists a scalar $\mu^*$ such that
+\begin{equation}
+    (1+\lambda_k^*)g_k^*=\mu^*,
+    \qquad k\in[K].
+    \label{eq:matching-condition}
+\end{equation}
+The multipliers also satisfy
+\begin{equation}
+    \lambda_k^*\ge0,
+    \qquad
+    U_k(u)-U_k(p_k^*)-\varepsilon_k\le0,
+    \qquad
+    \lambda_k^*\left(U_k(u)-U_k(p_k^*)-\varepsilon_k\right)=0.
+    \label{eq:complementarity}
+\end{equation}
+If a coordinate lies on the boundary $p_k^*=0$, then the equality in
+\eqref{eq:matching-condition} is replaced by
+$(1+\lambda_k^*)g_k^*\le\mu^*$.
+
+Moreover, for any fixed pair $(p^*,\lambda^*)$ with $p_k^*>0$, the exponentiated-gradient primal map
+\begin{equation}
+    \mathcal T_k(p^*;\lambda^*)
+    \coloneqq
+    \frac{p_k^*\exp\!\left(\eta_p(1+\lambda_k^*)g_k^*\right)}
+    {\sum_{j=1}^K p_j^*\exp\!\left(\eta_p(1+\lambda_j^*)g_j^*\right)}
+    \label{eq:fixed-point-map}
+\end{equation}
+obeys $\mathcal T(p^*;\lambda^*)=p^*$ if and only if the matching condition
+\eqref{eq:matching-condition} holds.
+\end{theorem}
+
+\begin{proof}
+We first prove the optimization statement. Rewrite \eqref{eq:static-program} as the equivalent convex minimization problem
+\[
+    \min_{p\in\DeltaK} -\sum_{k=1}^K U_k(p_k)
+    \quad\text{subject to}\quad
+    r_k(p_k)\coloneqq U_k(u)-U_k(p_k)-\varepsilon_k\le0.
+\]
+By concavity of $U_k$, the objective $-\sum_kU_k$ and all $r_k$ are convex. Slater's condition therefore makes the Karush--Kuhn--Tucker conditions necessary and sufficient for optimality. Introduce multipliers $\lambda_k\ge0$ for $r_k(p_k)\le0$, a multiplier $\mu\in\R$ for $\sum_kp_k=1$, and multipliers $\alpha_k\ge0$ for the nonnegativity constraints $-p_k\le0$. The Lagrangian is
+\begin{equation}
+    \mathcal L_{\mathrm{KKT}}(p,\lambda,\mu,\alpha)
+    =
+    -\sum_{k=1}^K U_k(p_k)
+    +\sum_{k=1}^K\lambda_k
+      \left(U_k(u)-U_k(p_k)-\varepsilon_k\right)
+    +\mu\left(\sum_{k=1}^Kp_k-1\right)
+    -\sum_{k=1}^K\alpha_k p_k.
+    \label{eq:kkt-lagrangian}
+\end{equation}
+Stationarity at an optimum gives, for every $k$,
+\begin{equation}
+    -(1+\lambda_k^*)U_k'(p_k^*)+\mu^*-\alpha_k^*=0.
+    \label{eq:kkt-stationarity}
+\end{equation}
+If $p_k^*>0$, complementary slackness for $-p_k\le0$ gives
+$\alpha_k^*=0$, and \eqref{eq:kkt-stationarity} becomes
+$(1+\lambda_k^*)g_k^*=\mu^*$. If $p_k^*=0$, then
+$\alpha_k^*\ge0$, so \eqref{eq:kkt-stationarity} gives
+$(1+\lambda_k^*)g_k^*=\mu^*-\alpha_k^*\le\mu^*$.
+The remaining KKT conditions give \eqref{eq:complementarity}.
+
+We next prove the fixed-point statement. Assume $p_k^*>0$ for all $k$. If
+\eqref{eq:matching-condition} holds, then every exponential factor in
+\eqref{eq:fixed-point-map} is the same, namely $\exp(\eta_p\mu^*)$; it cancels between numerator and denominator, so
+$\mathcal T_k(p^*;\lambda^*)=p_k^*$ for every $k$.
+
+Conversely, suppose $\mathcal T(p^*;\lambda^*)=p^*$. Since $p_k^*>0$, dividing the fixed-point identity by $p_k^*$ gives
+\[
+    \exp\!\left(\eta_p(1+\lambda_k^*)g_k^*\right)
+    =
+    \sum_{j=1}^K p_j^*
+      \exp\!\left(\eta_p(1+\lambda_j^*)g_j^*\right)
+\]
+for every $k$. The right-hand side does not depend on $k$. Taking logarithms shows that
+$(1+\lambda_k^*)g_k^*$ is constant across all coordinates. Denoting this constant by $\mu^*$ proves \eqref{eq:matching-condition}.
+\end{proof}
+
+Theorem~\ref{thm:matching} gives a direct interpretation of the primal--dual coupling. If task $k$ has an inactive lag constraint, then $\lambda_k^*=0$ and its raw marginal utility matches the common value $\mu^*$. If its lag constraint is active, the multiplier $\lambda_k^*>0$ raises the task's effective marginal utility from $g_k^*$ to $(1+\lambda_k^*)g_k^*$. PDCM therefore equalizes \emph{dual-weighted marginal utility}, rather than raw marginal utility, across interior tasks. The dual variable acts as the price of protecting a task from falling behind the uniform-allocation reference.
