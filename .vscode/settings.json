@@ -1,0 +1,51 @@
+{
+  // GUI-launched VS Code inherits launchd's PATH (/usr/bin:/bin:/usr/sbin:/sbin),
+  // which omits /Library/TeX/texbin -- MacTeX registers that via /etc/paths.d/TeX,
+  // read only by path_helper during shell startup. Pin it here so builds work no
+  // matter how VS Code was started.
+  "latex-workshop.latex.tools": [
+    {
+      // Delegates to the repo Makefile, so the editor and `make` on the command
+      // line are guaranteed to compile identically to Overleaf.
+      "name": "make",
+      "command": "make",
+      "args": ["-C", "%WORKSPACE_FOLDER%"],
+      "env": {
+        "PATH": "/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin"
+      }
+    },
+    {
+      // Standalone equivalent, for when you want to drive latexmk directly.
+      // TEXINPUTS mirrors the Makefile: the trailing colon appends the default
+      // search path, and the project root lets \input{iclr2027/pdcm_theory}
+      // resolve while -cd keeps \input{math_commands.tex} resolving too.
+      "name": "latexmk",
+      "command": "latexmk",
+      "args": [
+        "-cd", "-f", "-pdf", "-synctex=1", "-file-line-error",
+        "-interaction=nonstopmode",
+        "-outdir=%WORKSPACE_FOLDER%/build",
+        "%DOC%"
+      ],
+      "env": {
+        "PATH": "/Library/TeX/texbin:/usr/bin:/bin:/usr/sbin:/sbin",
+        "TEXINPUTS": "%WORKSPACE_FOLDER%:",
+        "BIBINPUTS": "%WORKSPACE_FOLDER%:",
+        "BSTINPUTS": "%WORKSPACE_FOLDER%:"
+      }
+    }
+  ],
+  "latex-workshop.latex.recipes": [
+    { "name": "make (Overleaf-equivalent)", "tools": ["make"] },
+    { "name": "latexmk", "tools": ["latexmk"] }
+  ],
+
+  // Must match the Makefile's -outdir, or the viewer and log parser look for
+  // the PDF and .log in iclr2027/ (the %DIR% default) and find nothing.
+  "latex-workshop.latex.outDir": "%WORKSPACE_FOLDER%/build",
+
+  // Keep the Overleaf project tree free of build artifacts.
+  "latex-workshop.latex.autoBuild.run": "onFileChange",
+  "latex-workshop.view.pdf.viewer": "tab",
+  "latex-workshop.synctex.afterBuild.enabled": true
+}
