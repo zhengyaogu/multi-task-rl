@@ -6,7 +6,6 @@
 \input{math_commands.tex}
 
 \usepackage{hyperref}
-\usepackage{cleveref}
 \usepackage{url}
 
 %algorithms
@@ -28,6 +27,9 @@
 \newcommand{\pos}[1]{\left[#1\right]_+}
 \newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
 \newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+
+% cleveref must load after amsmath/amsthm and hyperref, so keep it last.
+\usepackage{cleveref}
 
 
 \title{Formatting Instructions for ICLR 2027 \\ Conference Submissions}
@@ -81,10 +83,9 @@ paragraph.
 \end{abstract}
 
 \section{Methods}
-\texttt{pdcm\_theory} is good for an appendix section, but it is not
-well-organized or well-motivated enough to be in the main text.
-I have deviced a new outline for the main text that is more organized 
-and better motivated.
+% TODO(drafting note, not for the paper): pdcm_theory is good for an appendix
+% section, but it is not well-organized or well-motivated enough for the main
+% text. This section is the new, better-motivated outline.
 
 \textbf{1.} Given a sampling distribution
 \[
@@ -136,7 +137,7 @@ where $g_{t, k} = \nabla U_{t, k}(p_t)$ is a supergradient of the policy improve
 \end{equation}
 
 \subsection{Primal-Dual Mirror Descent}
-To solve Problem~\ref{eq:constrained_optimization_problem}, one needs to maximize an online objective within the probability simplex, while satisfying the cumulative constraints. We propose to use Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex} to solve this problem. PDMD consists of a mirror-descent-style primal update,
+To solve Problem~\labelcref{eq:constrained_optimization_problem}, one needs to maximize an online objective within the probability simplex, while satisfying the cumulative constraints. We propose to use Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex} to solve this problem. PDMD consists of a mirror-descent-style primal update,
 \begin{equation} \label{eq:primal_update}
 p_{t+1,j}
 = 
