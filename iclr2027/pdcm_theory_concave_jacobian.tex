@@ -1,0 +1,574 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amssymb,amsthm,mathtools,bm}
+\usepackage{microtype}
+\usepackage[hidelinks]{hyperref}
+
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\DeltaK}{\Delta_K}
+\newcommand{\KL}{D_{\mathrm{KL}}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\pos}[1]{\left[#1\right]_+}
+\newcommand{\ip}[2]{\left\langle #1,#2\right\rangle}
+\newcommand{\norm}[1]{\left\lVert #1\right\rVert}
+\newcommand{\diag}{\operatorname{diag}}
+
+\title{Theory of Full-Jacobian Primal--Dual Curvature Matching\\under Concave Mixture Responses}
+\author{}
+\date{}
+
+\begin{document}
+\maketitle
+\vspace{-1.5em}
+
+\section{Theory}
+
+\subsection{Problem formulation and PDCM}
+
+We consider $K\ge2$ training tasks. At controller round $t$, the training batch is allocated according to
+\[
+    p_t=(p_{t,1},\ldots,p_{t,K})\in
+    \DeltaK
+    \coloneqq
+    \{p\in\R_+^K:\one^\top p=1\}.
+\]
+The uniform reference allocation is
+\[
+    u\coloneqq \frac1K\one.
+\]
+The model state before round $t$ is fixed when defining the round-$t$ counterfactuals. Conditional on that state, let
+\[
+    U_{t,k}:\DeltaK\to\R
+\]
+denote the expected one-round improvement of evaluation task $k$ if the next training round uses allocation $p$. The response of task $k$ may depend on every coordinate of $p$; no separability assumption is made. Define
+\begin{equation}
+    U_t(p)
+    \coloneqq
+    \begin{bmatrix}
+        U_{t,1}(p)&\cdots&U_{t,K}(p)
+    \end{bmatrix}^{\!\top},
+    \qquad
+    F_t(p)\coloneqq \one^\top U_t(p).
+    \label{eq:def-U-F}
+\end{equation}
+The functions $U_t$ may change with $t$ because the underlying model changes during training. The results below are pathwise: they hold for any realized sequence satisfying the stated assumptions.
+
+\paragraph{Concave mixture response.}
+The structural assumption is that improvement has diminishing returns along straight-line changes of the data mixture.
+
+\begin{assumption}[Concave mixture response]
+\label{ass:concave}
+For every $t$ and $k$, $U_{t,k}$ extends to a differentiable function on an open neighborhood of $\DeltaK$ and is concave on $\DeltaK$. Equivalently, for every $p,q\in\DeltaK$ and $\alpha\in[0,1]$,
+\begin{equation}
+    U_{t,k}((1-\alpha)p+\alpha q)
+    \ge
+    (1-\alpha)U_{t,k}(p)+\alpha U_{t,k}(q).
+    \label{eq:line-concavity}
+\end{equation}
+\end{assumption}
+
+Assumption~\ref{ass:concave} is a statement about the response surface in \emph{mixture space}, not convexity of the neural-network training objective in parameter space. It is also consistent with recent empirical models of data mixing. Chen et al.~\cite{chen2025aioli} find that next-step domain loss is well approximated by an affine function of the current mixture, which makes loss-reduction utility affine and hence concave. Ye et al.~\cite{ye2025mixing} fit domain loss by
+\[
+    L_k(p)=c_k+a_k\exp(b_k^\top p),\qquad a_k>0,
+\]
+which is convex in $p$; the corresponding loss-reduction utility $C_k-L_k(p)$ is therefore concave. These results motivate the assumption but do not claim that every multi-task RL response is globally concave.
+
+The main mathematical consequence is the first-order characterization of concavity.
+
+\begin{lemma}[Tangent upper bound]
+\label{lem:tangent}
+Under Assumption~\ref{ass:concave}, for every $t,k$ and every $p,q\in\DeltaK$,
+\begin{equation}
+    U_{t,k}(q)-U_{t,k}(p)
+    \le
+    \ip{\nabla U_{t,k}(p)}{q-p}.
+    \label{eq:tangent}
+\end{equation}
+\end{lemma}
+
+\begin{proof}
+For $\alpha\in(0,1]$, concavity gives
+\[
+    U_{t,k}(p+\alpha(q-p))-U_{t,k}(p)
+    \ge
+    \alpha\bigl(U_{t,k}(q)-U_{t,k}(p)\bigr).
+\]
+Divide by $\alpha$ and let $\alpha\downarrow0$. Differentiability gives
+\[
+    \ip{\nabla U_{t,k}(p)}{q-p}
+    \ge
+    U_{t,k}(q)-U_{t,k}(p),
+\]
+which proves \eqref{eq:tangent}.
+\end{proof}
+
+Thus no second-order remainder is needed: the tangent plane is an exact upper bound on every secant of a differentiable concave response.
+
+Define the response Jacobian
+\begin{equation}
+    G_t(p)
+    \coloneqq
+    \nabla_p U_t(p)\in\R^{K\times K},
+    \qquad
+    [G_t(p)]_{kj}
+    =\frac{\partial U_{t,k}(p)}{\partial p_j}.
+    \label{eq:G}
+\end{equation}
+At the played allocation, write
+\[
+    G_t\coloneqq G_t(p_t),
+    \qquad
+    g_{t,k}\coloneqq \nabla U_{t,k}(p_t),
+\]
+so $g_{t,k}^\top$ is row $k$ of $G_t$. An off-diagonal entry $[G_t]_{kj}$ measures the local effect of allocating more training mass to task $j$ on the improvement of evaluation task $k$. We analyze the idealized controller with exact access to $G_t$; the Jacobian estimator is abstracted out.
+
+PDCM protects each task against the uniform-allocation counterfactual. Let $\varepsilon_{t,k}\ge0$ be the allowed lag, and define the true residual
+\begin{equation}
+    c_{t,k}(p)
+    \coloneqq
+    U_{t,k}(u)-U_{t,k}(p)-\varepsilon_{t,k}.
+    \label{eq:true-residual}
+\end{equation}
+Positive $c_{t,k}(p)$ means that task $k$ improves by more than $\varepsilon_{t,k}$ less than it would under uniform allocation. Lemma~\ref{lem:tangent}, evaluated at $p_t$ and $q=u$, gives
+\begin{equation}
+    c_{t,k}(p_t)
+    \le
+    \ip{g_{t,k}}{u-p_t}-\varepsilon_{t,k}.
+    \label{eq:safety-cert}
+\end{equation}
+Therefore the first-order quantity on the right is a conservative certificate for the unobserved counterfactual lag.
+
+For the online analysis, define the round-$t$ affine certificate
+\begin{equation}
+    h_t(p)
+    \coloneqq
+    G_t(u-p)-\varepsilon_t\in\R^K,
+    \qquad
+    \varepsilon_t=(\varepsilon_{t,1},\ldots,\varepsilon_{t,K})^\top.
+    \label{eq:h}
+\end{equation}
+At the played point, \eqref{eq:safety-cert} says
+\begin{equation}
+    c_t(p_t)\le h_t(p_t)
+    \quad\text{coordinatewise}.
+    \label{eq:true-vs-h}
+\end{equation}
+For horizon $T$, let
+\begin{equation}
+    \mathcal P_T
+    \coloneqq
+    \{p\in\DeltaK:h_t(p)\le0\text{ coordinatewise for every }t\le T\}.
+    \label{eq:PT}
+\end{equation}
+This is the set of fixed allocations that are safe under every linear response model revealed along the realized trajectory. It is nonempty because $u\in\mathcal P_T$ whenever $\varepsilon_t\ge0$.
+
+The aggregate marginal utility is
+\begin{equation}
+    \nabla F_t(p_t)=G_t^\top\one.
+    \label{eq:grad-F}
+\end{equation}
+Let $\lambda_t\in\R_+^K$ be the dual variables. The dual-weighted primal score is
+\begin{equation}
+    s_t
+    \coloneqq
+    G_t^\top(\one+\lambda_t).
+    \label{eq:s}
+\end{equation}
+Full-Jacobian PDCM performs entropic mirror ascent in $p$ and projected ascent on the constraint queues:
+\begin{align}
+    p_{t+1}
+    &\coloneqq
+    \arg\max_{p\in\DeltaK}
+    \left\{
+        \eta_p\ip{s_t}{p}-\KL(p\|p_t)
+    \right\},
+    \label{eq:p-update}\\
+    \lambda_{t+1}
+    &\coloneqq
+    \pos{\lambda_t+\eta_d h_t(p_t)},
+    \label{eq:lambda-update}
+\end{align}
+with $p_1=u$ and $\lambda_1=0$. Here
+\[
+    \KL(p\|q)=\sum_{j=1}^K p_j\log\frac{p_j}{q_j}.
+\]
+The primal update has the closed form
+\begin{equation}
+    p_{t+1,j}
+    =
+    \frac{p_{t,j}\exp(\eta_p s_{t,j})}
+    {\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})}.
+    \label{eq:softmax-update}
+\end{equation}
+Since
+\begin{equation}
+    s_{t,j}
+    =
+    \sum_{k=1}^K
+    (1+\lambda_{t,k})[G_t]_{kj},
+    \label{eq:cross-task-score}
+\end{equation}
+the score for training task $j$ includes its effect on every evaluation task. If $G_t$ is diagonal, then
+\[
+    s_{t,k}=(1+\lambda_{t,k})g_{t,k},
+    \qquad
+    h_{t,k}(p_t)=g_{t,k}\left(\frac1K-p_{t,k}\right)-\varepsilon_{t,k},
+\]
+which recovers coordinate-wise PDCM.
+
+\begin{assumption}[Bounded Jacobian and budgets]
+\label{ass:bounded}
+There exist finite constants $L,E$ such that, for every $t$ and $p\in\DeltaK$,
+\begin{equation}
+    \norm{G_t(p)}_1
+    \coloneqq
+    \max_j\sum_{k=1}^K|[G_t(p)]_{kj}|
+    \le L,
+    \qquad
+    0\le\varepsilon_{t,k}\le E.
+    \label{eq:bounded}
+\end{equation}
+\end{assumption}
+
+For a horizon $T$, define
+\begin{equation}
+    \Lambda_T
+    \coloneqq
+    \max_{1\le t\le T+1}\norm{\lambda_t}_\infty,
+    \qquad
+    H\coloneqq2L+E.
+    \label{eq:constants}
+\end{equation}
+Then
+\begin{equation}
+    \norm{s_t}_\infty\le L(1+\Lambda_T),
+    \qquad
+    \norm{h_t(p_t)}_\infty\le H.
+    \label{eq:basic-bounds}
+\end{equation}
+
+\begin{corollary}[Affine mixing-law special case]
+\label{cor:affine}
+If, at round $t$, each $U_{t,k}$ is affine in $p$, then for every $p\in\DeltaK$,
+\begin{equation}
+    U_{t,k}(u)-U_{t,k}(p)
+    =
+    \ip{\nabla U_{t,k}}{u-p},
+\end{equation}
+so $c_t(p)=h_t(p)$ exactly. In this special case $\mathcal P_T$ is the true fixed-allocation feasible set, not merely a first-order safe set.
+\end{corollary}
+
+\subsection{PDCM constrained no-regret theorem}
+
+For a fixed comparator $p\in\DeltaK$, define cumulative utility regret
+\begin{equation}
+    R_T(p)
+    \coloneqq
+    \sum_{t=1}^T\bigl[F_t(p)-F_t(p_t)\bigr].
+    \label{eq:regret}
+\end{equation}
+
+\begin{theorem}[Constrained no-regret of full-Jacobian PDCM]
+\label{thm:main}
+Suppose Assumptions~\ref{ass:concave} and \ref{ass:bounded} hold, and let $(p_t,\lambda_t)$ be generated by \eqref{eq:p-update}--\eqref{eq:lambda-update}. Then, for every $T\ge1$, every $p\in\mathcal P_T$, and every $\eta_p,\eta_d>0$,
+\begin{equation}
+    R_T(p)
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}L^2(1+\Lambda_T)^2
+    +\frac{\eta_d T}{2}KH^2.
+    \label{eq:regret-bound}
+\end{equation}
+Moreover, for every task $k$,
+\begin{equation}
+    \pos{\sum_{t=1}^T c_{t,k}(p_t)}
+    \le
+    \pos{\sum_{t=1}^T h_{t,k}(p_t)}
+    \le
+    \frac{\Lambda_T}{\eta_d}.
+    \label{eq:constraint-bound}
+\end{equation}
+
+If the dual iterates are uniformly bounded,
+\begin{equation}
+    \sup_{t\ge1}\norm{\lambda_t}_\infty\le\Lambda<\infty,
+    \label{eq:dual-stability}
+\end{equation}
+and the learning rates scale as $\eta_p=\Theta(T^{-1/2})$ and $\eta_d=\Theta(T^{-1/2})$, then, for every fixed $p\in\mathcal P_T$,
+\begin{equation}
+    R_T(p)=O(\sqrt T),
+    \qquad
+    \pos{\sum_{t=1}^T c_{t,k}(p_t)}=O(\sqrt T).
+    \label{eq:rates}
+\end{equation}
+Hence average regret and average cumulative excess lag are both $O(T^{-1/2})$.
+\end{theorem}
+
+\begin{proof}
+We use two standard one-step inequalities and prove both for completeness.
+
+\paragraph{Primal mirror-ascent inequality.}
+Optimality of \eqref{eq:p-update} and the three-point identity for the negative-entropy Bregman divergence give, for every $p\in\DeltaK$,
+\begin{equation}
+    \eta_p\ip{s_t}{p-p_{t+1}}
+    \le
+    \KL(p\|p_t)-\KL(p\|p_{t+1})-\KL(p_{t+1}\|p_t).
+    \label{eq:three-point}
+\end{equation}
+Add $\eta_p\ip{s_t}{p_{t+1}-p_t}$ to both sides. By H\"older's inequality and Pinsker's inequality,
+\[
+    \ip{s_t}{p_{t+1}-p_t}
+    \le
+    \norm{s_t}_\infty\norm{p_{t+1}-p_t}_1,
+    \qquad
+    \KL(p_{t+1}\|p_t)
+    \ge
+    \frac12\norm{p_{t+1}-p_t}_1^2.
+\]
+Using $ab-b^2/2\le a^2/2$ yields
+\begin{equation}
+    \ip{s_t}{p-p_t}
+    \le
+    \frac{\KL(p\|p_t)-\KL(p\|p_{t+1})}{\eta_p}
+    +\frac{\eta_p}{2}\norm{s_t}_\infty^2.
+    \label{eq:mirror-one-step}
+\end{equation}
+Summing and using $p_1=u$, $\KL(p\|u)\le\log K$, and \eqref{eq:basic-bounds},
+\begin{equation}
+    \sum_{t=1}^T\ip{s_t}{p-p_t}
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}L^2(1+\Lambda_T)^2.
+    \label{eq:mirror-sum}
+\end{equation}
+
+\paragraph{Relating the score to regret and constraints.}
+By definition of $h_t$,
+\begin{equation}
+    h_t(p_t)-h_t(p)=G_t(p-p_t).
+    \label{eq:h-difference}
+\end{equation}
+Using $s_t=G_t^\top(\one+\lambda_t)$,
+\begin{align}
+    \ip{s_t}{p-p_t}
+    &=
+    \ip{G_t^\top\one}{p-p_t}
+    +\ip{\lambda_t}{h_t(p_t)-h_t(p)}.
+    \label{eq:score-decomp}
+\end{align}
+For $p\in\mathcal P_T$, $h_t(p)\le0$ and $\lambda_t\ge0$, so
+\begin{equation}
+    \ip{G_t^\top\one}{p-p_t}
+    +\ip{\lambda_t}{h_t(p_t)}
+    \le
+    \ip{s_t}{p-p_t}.
+    \label{eq:drop-safe}
+\end{equation}
+Since $F_t=\sum_kU_{t,k}$ is concave, Lemma~\ref{lem:tangent} gives
+\begin{equation}
+    F_t(p)-F_t(p_t)
+    \le
+    \ip{\nabla F_t(p_t)}{p-p_t}
+    =
+    \ip{G_t^\top\one}{p-p_t}.
+    \label{eq:F-concavity}
+\end{equation}
+Combining \eqref{eq:mirror-sum}--\eqref{eq:F-concavity},
+\begin{equation}
+    R_T(p)
+    +\sum_{t=1}^T\ip{\lambda_t}{h_t(p_t)}
+    \le
+    \frac{\log K}{\eta_p}
+    +\frac{\eta_p T}{2}L^2(1+\Lambda_T)^2.
+    \label{eq:pd-predual}
+\end{equation}
+
+\paragraph{Dual inequality.}
+Projection onto the nonnegative orthant is nonexpansive and fixes the origin. Thus \eqref{eq:lambda-update} implies
+\begin{align}
+    \norm{\lambda_{t+1}}_2^2
+    &\le
+    \norm{\lambda_t+\eta_d h_t(p_t)}_2^2\\
+    &=
+    \norm{\lambda_t}_2^2
+    +2\eta_d\ip{\lambda_t}{h_t(p_t)}
+    +\eta_d^2\norm{h_t(p_t)}_2^2.
+    \label{eq:dual-square}
+\end{align}
+Rearranging and summing, using $\lambda_1=0$ and $\norm{h_t(p_t)}_2^2\le KH^2$, gives
+\begin{equation}
+    -\sum_{t=1}^T\ip{\lambda_t}{h_t(p_t)}
+    \le
+    \frac{\eta_d T}{2}KH^2.
+    \label{eq:dual-inner}
+\end{equation}
+Substituting \eqref{eq:dual-inner} into \eqref{eq:pd-predual} proves \eqref{eq:regret-bound}.
+
+For the constraint bound, coordinatewise projection gives
+\[
+    \lambda_{t+1,k}
+    =\max\{0,\lambda_{t,k}+\eta_dh_{t,k}(p_t)\}
+    \ge
+    \lambda_{t,k}+\eta_dh_{t,k}(p_t).
+\]
+Telescoping and using $\lambda_{1,k}=0$,
+\[
+    \eta_d\sum_{t=1}^T h_{t,k}(p_t)
+    \le
+    \lambda_{T+1,k}
+    \le
+    \Lambda_T.
+\]
+Taking positive parts yields the second inequality in \eqref{eq:constraint-bound}. The first follows from $c_{t,k}(p_t)\le h_{t,k}(p_t)$ in \eqref{eq:true-vs-h}. Finally, if \eqref{eq:dual-stability} holds and both learning rates are of order $T^{-1/2}$, every term in \eqref{eq:regret-bound} and \eqref{eq:constraint-bound} is $O(\sqrt T)$.
+\end{proof}
+
+\begin{corollary}[Best fixed first-order-safe allocation]
+\label{cor:best-fixed}
+Let
+\[
+    p_T^\star\in
+    \arg\max_{p\in\mathcal P_T}\sum_{t=1}^TF_t(p).
+\]
+Since $\mathcal P_T$ is nonempty and compact, a maximizer exists. Under \eqref{eq:dual-stability} and $\eta_p,\eta_d=\Theta(T^{-1/2})$,
+\[
+    \sum_{t=1}^T F_t(p_T^\star)
+    -\sum_{t=1}^T F_t(p_t)
+    =O(\sqrt T).
+\]
+Moreover, for every task $k$,
+\begin{equation}
+    \frac1T\sum_{t=1}^T
+    \bigl[U_{t,k}(u)-U_{t,k}(p_t)\bigr]
+    \le
+    \frac1T\sum_{t=1}^T\varepsilon_{t,k}
+    +O(T^{-1/2}).
+    \label{eq:avg-lag}
+\end{equation}
+In the affine mixing-law special case of Corollary~\ref{cor:affine}, $\mathcal P_T$ is exactly the set of fixed allocations satisfying the true uniform-reference constraints at every round. The regret statement is then relative to the best fixed truly safe allocation in hindsight.
+\end{corollary}
+
+\begin{remark}[Dual stability]
+The finite-horizon inequalities \eqref{eq:regret-bound} and \eqref{eq:constraint-bound} hold with the realized quantity $\Lambda_T$ and do not assume a uniform bound in advance. The $O(\sqrt T)$ rates require $\Lambda_T=O(1)$. This is a stability condition on the coupled controller and training dynamics; it should be stated explicitly unless boundedness is established from stronger assumptions.
+\end{remark}
+
+\subsection{Dual-weighted marginal-utility matching}
+
+The online theorem controls finite-time behavior. A stationary problem gives the allocation condition targeted by the primal--dual updates. Let $U_k:\DeltaK\to\R$ be differentiable and concave, define
+\[
+    U(p)=\begin{bmatrix}U_1(p)&\cdots&U_K(p)\end{bmatrix}^{\!\top},
+    \qquad
+    G(p)=\nabla_pU(p),
+    \qquad
+    F(p)=\one^\top U(p),
+\]
+and consider
+\begin{equation}
+\begin{aligned}
+    \max_{p\in\DeltaK}\quad
+    &F(p)\\
+    \text{subject to}\quad
+    &U_k(u)-U_k(p)-\varepsilon_k\le0,
+    \qquad k\in[K].
+\end{aligned}
+\label{eq:stationary-problem}
+\end{equation}
+Because $F$ is concave and $U_k(u)-U_k(p)-\varepsilon_k$ is convex, \eqref{eq:stationary-problem} is a convex optimization problem after negating the objective.
+
+\begin{theorem}[Dual-weighted marginal-utility matching]
+\label{thm:matching}
+Assume \eqref{eq:stationary-problem} satisfies Slater's condition, and let $(p^*,\lambda^*)$ be a primal--dual optimum. Define
+\begin{equation}
+    s^*
+    \coloneqq
+    G(p^*)^\top(\one+\lambda^*),
+    \qquad
+    s_j^*
+    =
+    \sum_{k=1}^K
+    (1+\lambda_k^*)
+    \frac{\partial U_k(p^*)}{\partial p_j}.
+    \label{eq:s-star}
+\end{equation}
+Then there exists $\mu^*\in\R$ such that
+\begin{equation}
+    s_j^*=\mu^*
+    \quad\text{if }p_j^*>0,
+    \qquad
+    s_j^*\le\mu^*
+    \quad\text{if }p_j^*=0.
+    \label{eq:matching}
+\end{equation}
+The dual variables satisfy
+\begin{equation}
+    \lambda_k^*\ge0,
+    \qquad
+    U_k(u)-U_k(p^*)-\varepsilon_k\le0,
+    \qquad
+    \lambda_k^*\bigl(U_k(u)-U_k(p^*)-\varepsilon_k\bigr)=0.
+    \label{eq:complementarity}
+\end{equation}
+If $p^*$ has full support, then $p^*$ is a fixed point of the entropic PDCM primal map for every $\eta_p>0$ if and only if
+\begin{equation}
+    G(p^*)^\top(\one+\lambda^*)=\mu^*\one.
+    \label{eq:full-support-match}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+Write \eqref{eq:stationary-problem} as the convex minimization problem
+\[
+    \min_{p\in\DeltaK}-F(p)
+    \quad\text{subject to}\quad
+    c_k(p)\coloneqq U_k(u)-U_k(p)-\varepsilon_k\le0.
+\]
+By Slater's condition, the Karush--Kuhn--Tucker conditions are necessary and sufficient. Introduce multipliers $\lambda_k\ge0$ for $c_k(p)\le0$, $\mu\in\R$ for $\one^\top p=1$, and $\alpha_j\ge0$ for $-p_j\le0$. The Lagrangian is
+\[
+    \mathcal L(p,\lambda,\mu,\alpha)
+    =
+    -F(p)
+    +\sum_{k=1}^K\lambda_k c_k(p)
+    +\mu(\one^\top p-1)
+    -\alpha^\top p.
+\]
+Since $\nabla F(p)=G(p)^\top\one$ and $\nabla c_k(p)=-\nabla U_k(p)$, stationarity at the optimum gives
+\begin{equation}
+    -G(p^*)^\top(\one+\lambda^*)
+    +\mu^*\one-\alpha^*=0.
+    \label{eq:kkt-stat}
+\end{equation}
+Hence $s^*=\mu^*\one-\alpha^*$. Complementary slackness for $p_j\ge0$ gives $\alpha_j^*p_j^*=0$. If $p_j^*>0$, then $\alpha_j^*=0$ and $s_j^*=\mu^*$. If $p_j^*=0$, then $\alpha_j^*\ge0$ and $s_j^*\le\mu^*$. This proves \eqref{eq:matching}. The remaining KKT conditions give \eqref{eq:complementarity}.
+
+Now suppose $p^*$ has full support. The entropic primal map is
+\[
+    \mathcal T_j(p^*;\lambda^*)
+    =
+    \frac{p_j^*\exp(\eta_p s_j^*)}
+    {\sum_{\ell=1}^Kp_\ell^*\exp(\eta_p s_\ell^*)}.
+\]
+If all $s_j^*$ are equal, the common exponential factor cancels and $\mathcal T(p^*;\lambda^*)=p^*$. Conversely, if $\mathcal T(p^*;\lambda^*)=p^*$ and $p_j^*>0$ for every $j$, cancellation of $p_j^*$ shows that $\exp(\eta_ps_j^*)$ is constant in $j$, hence all $s_j^*$ are equal. This proves \eqref{eq:full-support-match}.
+\end{proof}
+
+The matching condition has a direct allocation interpretation. At an interior optimum, every training coordinate has the same \emph{dual-weighted total marginal utility}. A task with an active lag constraint has $\lambda_k^*>0$, so its row of the response Jacobian receives extra weight. PDCM therefore does not merely equalize each task's self-improvement slope; it equalizes the total cross-task marginal value after weighting tasks according to their safety pressure.
+
+\begin{thebibliography}{9}
+
+\bibitem{chen2025aioli}
+Mayee Chen, Michael Hu, Nicholas Lourie, Kyunghyun Cho, and Christopher R\'e.
+\newblock Aioli: A Unified Optimization Framework for Language Model Data Mixing.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2025.
+
+\bibitem{ye2025mixing}
+Jiasheng Ye, Peiju Liu, Tianxiang Sun, Jun Zhan, Yunhua Zhou, and Xipeng Qiu.
+\newblock Data Mixing Laws: Optimizing Data Mixtures by Predicting Language Modeling Performance.
+\newblock In \emph{International Conference on Learning Representations (ICLR)}, 2025.
+
+\end{thebibliography}
+
+\end{document}
