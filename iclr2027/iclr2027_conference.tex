@@ -6,7 +6,12 @@
 \input{math_commands.tex}
 
 \usepackage{hyperref}
+\usepackage{cleveref}
 \usepackage{url}
+
+%algorithms
+\usepackage{algorithm}
+\usepackage{algorithmic}
 
 % Preamble required by \input{iclr2027/pdcm_theory}; see the header comment at
 % the top of that file. \R and \KL come from math_commands.tex.
@@ -74,6 +79,94 @@ The word \textsc{Abstract} must be centered, in small caps, and in point size 12
 line spaces precede the abstract. The abstract must be limited to one
 paragraph.
 \end{abstract}
+
+\section{Methods}
+\texttt{pdcm\_theory} is good for an appendix section, but it is not
+well-organized or well-motivated enough to be in the main text.
+I have deviced a new outline for the main text that is more organized 
+and better motivated.
+
+\textbf{1.} Given a sampling distribution
+\[
+    p_t=(p_{t,1},\ldots,p_{t,K})\in
+    \DeltaK
+    \coloneqq
+    \left\{p\in\R_+^K:\sum_{k=1}^K p_k=1\right\}.
+\]
+By performance difference lemma~\citep{Kakade2002ApproximatelyOA},
+the \textit{policy improvement} is
+\begin{equation}
+\label{eq:policy_improvement_is}
+U_t(p_t)
+\coloneqq
+J(\pi_{t+1}) - J(\pi_t) = 
+\mathbb{E}_{x\sim \mathcal{X}} \left[
+\mathbb{E}_{y\sim \pi_t(\cdot\mid x)}
+\left[
+\frac{\pi_{t+1}(y\mid x)}
+{\pi_{t}(y\mid x)}
+A_{\pi_{t}}(y\mid x)
+\right]\right],
+\end{equation}
+where $\pi_{t+1}$ is the one-step improved policy with respect to the sampling distribution $p_t$.
+The goal of non-asymptotic RL post-training is to maximize the total
+policy improvement over $T$ iterations:
+\begin{equation}
+    \max_{p_t \in \Delta_K}J(\pi_T) - J(\pi_0) = \max_{p_t \in \Delta_K} \sum_{t=0}^{T-1} U_t(p_t).
+\end{equation}
+However, maximizing the total policy improvement can lead to skewed development
+over tasks that should otherwise be treated equally. To address this, 
+we introduce the following constraint that no task should be left behind
+what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
+\begin{equation} \label{eq:constraint_uniform_baseline}
+\sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
+\end{equation}
+In practice, it is cost-prohibitive to estimate 
+$U_{t, k}\left( u \right)$, as it involves computing the
+counterfactual policy improvement of a uniform baseline. Recent work~\citep{datamixinglaws2024,aioli2025,autoscale2025} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths:
+\begin{equation} \label{eq:constraint_upper_bound}
+U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle,
+\end{equation}
+where $g_{t, k} = \nabla U_{t, k}(p_t)$ is a supergradient of the policy improvement with respect to the sampling distribution $p_t$. \Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being a more conservative constraint. This leads to the following constrained optimization problem:
+\begin{equation} \label{eq:constrained_optimization_problem}
+\begin{aligned}
+\max_{p_t \in \Delta_K} & \quad \sum_{t=0}^{T-1} U_t(p_t) \\
+\text{s.t.} & \quad \sum_{t = 1}^T \langle g_{t, k}, u - p_t \rangle \leq \epsilon, \quad \forall k\in[K], \forall t\in[T].
+\end{aligned}
+\end{equation}
+
+\subsection{Primal-Dual Mirror Descent}
+To solve Problem~\ref{eq:constrained_optimization_problem}, one needs to maximize an online objective within the probability simplex, while satisfying the cumulative constraints. We propose to use Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex} to solve this problem. PDMD consists of a mirror-descent-style primal update,
+\begin{equation} \label{eq:primal_update}
+p_{t+1,j}
+= 
+\frac{p_{t,j}\exp(\eta_p s_{t,j})}
+{\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})},
+\end{equation}
+where $s_{t,j}$ is the score of task $j$ at iteration $t$; and a dual update that enforces the cumulative constraints.
+\begin{equation} \label{eq:dual_update}
+\lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
+\end{equation}
+As lag $ \langle g_{t, k}, u - p_t \rangle - \epsilon$ increases, the primal score $s_{t,j}$ is boosted by the dual variable $\lambda_t$, which in turn reduces the compensate for the lag in task $j$ in the next iteration.
+\begin{equation} \label{eq:dual_weighted_marginal_utility}
+s_{t, k} = (1 + \lambda_{t, k}) g_{t, k}
+\end{equation}
+The exact PDMD algorithm is shown in \Cref{alg:pdcm_jacobian}. 
+\input{pdcm_jacobian_alg.tex}
+
+What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_t(p_t)$ in a small batch.
+\begin{equation} \label{eq:theil-sen}
+\widehat g_{t,kj}
+=
+\operatorname*{median}_{\substack{1\le a<b\le t-1\\ |p_{b,j}-p_{a,j}|>\delta}}
+\frac{\widehat U_{b,k}-\widehat U_{a,k}}{p_{b,j}-p_{a,j}} .
+\qquad
+\forall k\in[K], j\in[K].
+\end{equation}
+
+
+
+
 
 \input{iclr2027/pdcm_theory}
 
