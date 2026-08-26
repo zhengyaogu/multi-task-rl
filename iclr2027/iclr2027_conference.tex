@@ -16,11 +16,6 @@
 % the top of that file. \R and \KL come from math_commands.tex.
 \usepackage{amsthm,mathtools}
 
-\newtheorem{assumption}{Assumption}
-\newtheorem{lemma}{Lemma}
-\newtheorem{theorem}{Theorem}
-\newtheorem{corollary}{Corollary}
-\newtheorem{remark}{Remark}
 
 \newcommand{\DeltaK}{\Delta_K}
 \newcommand{\one}{\mathbf{1}}
@@ -30,6 +25,15 @@
 
 % cleveref must load after amsmath/amsthm and hyperref, so keep it last.
 \usepackage{cleveref}
+
+% Defined AFTER cleveref so it patches \newtheorem and \Cref knows their
+% names; environments declared before cleveref would need manual \crefname.
+\newtheorem{assumption}{Assumption}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{corollary}{Corollary}
+\newtheorem{remark}{Remark}
+
 
 
 \title{Allocate Don't Amputate: Online Data Allocation for Multi-Task LLM Post-Training}
@@ -124,11 +128,17 @@ what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}
 \end{equation}
 In practice, it is cost-prohibitive to estimate 
 $U_{t, k}\left( u \right)$, as it involves computing the
-counterfactual policy improvement of a uniform baseline. Recent work~\citep{datamixinglaws2024,aioli2025,autoscale2025} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths:
+counterfactual policy improvement of a uniform baseline. Recent work~\citep{datamixinglaws2024,aioli2025,autoscale2025} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We take this as our standing assumption.
+\begin{assumption}[Approximate concavity of task response]
+\label{asm:concavity}
+For every task $k\in[K]$ and iteration $t$, the task-wise utility $U_{t,k}$ admits a
+supergradient $g_{t,k}=\nabla U_{t,k}(p_t)$ with respect to the sampling distribution
+$p_t$, so that
 \begin{equation} \label{eq:constraint_upper_bound}
-U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle,
+U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle .
 \end{equation}
-where $g_{t, k} = \nabla U_{t, k}(p_t)$ is a supergradient of the policy improvement with respect to the sampling distribution $p_t$. \Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being a more conservative constraint. This leads to the following constrained optimization problem:
+\end{assumption}
+\Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being a more conservative constraint. This leads to the following constrained optimization problem:
 \begin{equation} \label{eq:constrained_optimization_problem}
 \begin{aligned}
 \max_{p_t \in \Delta_K} & \quad \sum_{t=0}^{T-1} U_t(p_t) \\
@@ -171,7 +181,7 @@ The adaptive allocation in PDCM is intended to exploit temporal variation in tas
 
 \begin{theorem}[Constrained no-regret of PDCM]
 \label{thm:pdcm_no_regret}
-Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable and assumption~\ref{eq:constraint_upper_bound} stands. Let $F_t(p) = \mathbf{1}^T U_t(p)$ denote the total policy improvement at iteration $t$, and let
+Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable and \Cref{asm:concavity} holds. Let $F_t(p) = \mathbf{1}^T U_t(p)$ denote the total policy improvement at iteration $t$, and let
 \[
 p_T^\star
 \in
