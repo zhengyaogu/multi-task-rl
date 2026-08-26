@@ -32,7 +32,7 @@
 \usepackage{cleveref}
 
 
-\title{Formatting Instructions for ICLR 2027 \\ Conference Submissions}
+\title{Allocate Don't Amputate: Online Data Allocation for Multi-Task LLM Post-Training}
 
 % Authors must not appear in the submitted version. They should be hidden
 % as long as the \iclrfinalcopy macro remains commented out below.
@@ -136,26 +136,89 @@ where $g_{t, k} = \nabla U_{t, k}(p_t)$ is a supergradient of the policy improve
 \end{aligned}
 \end{equation}
 
-\subsection{Primal-Dual Mirror Descent}
-To solve Problem~\labelcref{eq:constrained_optimization_problem}, one needs to maximize an online objective within the probability simplex, while satisfying the cumulative constraints. We propose to use Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex} to solve this problem. PDMD consists of a mirror-descent-style primal update,
+\subsection{Primal-Dual Curvature Matching}
+To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
 \begin{equation} \label{eq:primal_update}
 p_{t+1,j}
 = 
 \frac{p_{t,j}\exp(\eta_p s_{t,j})}
 {\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})},
 \end{equation}
-where $s_{t,j}$ is the score of task $j$ at iteration $t$; and a dual update that enforces the cumulative constraints.
+where $s_{t,j}$ is the corresponding score of task $j$ at iteration $t$. In a generic PDMD formulation, this score combines the gradient of the primal objective with dual-weighted gradients of the constraints. In Problem~\labelcref{eq:constrained_optimization_problem}, however, the task-wise counterfactual constraints are linearized surrogates of the same task-wise utility functions that define the primal objective. Consequently, the task-wise score $s_{t, j}$ is obtained by amplifying the marginal-utility signal in $g_{t, k}$ according to the current lag pressure encoded by $\lambda_t$.
+\begin{equation} \label{eq:dual_weighted_marginal_utility_vectorized}
+s_t
+=
+G_t^\top \left( \mathbf{1} + \lambda_t \right)
+\qquad
+\text{, where }
+G_t
+    =
+    \begin{bmatrix}
+    g_{t,1}^{\top}\\
+    \vdots\\
+    g_{t,K}^{\top}
+    \end{bmatrix}
+\end{equation}
+The lag pressure $\lambda_t$ is accumulated over iterations through projected dual ascent. Specifically, for each task $k$,
 \begin{equation} \label{eq:dual_update}
 \lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
 \end{equation}
-As lag $ \langle g_{t, k}, u - p_t \rangle - \epsilon$ increases, the primal score $s_{t,j}$ is boosted by the dual variable $\lambda_t$, which in turn reduces the compensate for the lag in task $j$ in the next iteration.
-\begin{equation} \label{eq:dual_weighted_marginal_utility}
-s_{t, k} = (1 + \lambda_{t, k}) g_{t, k}
-\end{equation}
-The exact PDMD algorithm is shown in \Cref{alg:pdcm_jacobian}. 
+where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textbf{\textit{Primal-Dual Curvature Matching}} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
+
 \input{pdcm_jacobian_alg.tex}
 
-What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_t(p_t)$ in a small batch.
+The adaptive allocation in PDCM is intended to exploit temporal variation in task-wise marginal utility. The following result shows that this adaptivity remains asymptotically competitive with any fixed feasible allocation, including the uniform mixture, while simultaneously controlling cumulative task-wise lag.
+
+\begin{theorem}[Constrained no-regret of PDCM]
+\label{thm:pdcm_no_regret}
+Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable and assumption~\ref{eq:constraint_upper_bound} stands. Let $F_t(p) = \mathbf{1}^T U_t(p)$ denote the total policy improvement at iteration $t$, and let
+\[
+p_T^\star
+\in
+\arg\max_{p\in\mathcal P_T}
+\sum_{t=1}^T F_t(p)
+\]
+denote the best fixed feasible allocation in hindsight. If
+$\eta_p,\eta_\lambda=\Theta(T^{-1/2})$, then PDCM satisfies
+\begin{equation}
+\sum_{t=1}^T
+\left[
+F_t(p_T^\star)-F_t(p_t)
+\right]
+=
+O(\sqrt{T}),
+\end{equation}
+while, for every task $k$,
+\begin{equation}
+\left[
+\sum_{t=1}^T
+\left(
+U_{t,k}(u)-U_{t,k}(p_t)-\epsilon_{t,k}
+\right)
+\right]_+
+=
+O(\sqrt{T}).
+\end{equation}
+Consequently, both the average regret and the average excess counterfactual lag vanish at rate
+$O(T^{-1/2})$.
+\end{theorem}
+
+\subsection{Policy Improvement Estimation}
+The performance difference lemma formulation of policy improvement in \Cref{eq:policy_improvement_is} provides a convenient way to estimate the task-wise policy improvement $U_{t,k}$ using off-policy evaluation~\citep{ope2000}. Specifically, we use generated rollouts from the training batch to estimate the task-wise policy improvement as
+\begin{equation} \label{eq:policy_improvement_estimation}
+\widehat U_{t,k}
+=
+\frac{1}{N_k}\sum_{i=1}^{N_k}
+\frac{\pi_{t+1}(y_i\mid x_i)}
+{\pi_{t}(y_i\mid x_i)}
+A_{\pi_{t}}(y_i\mid x_i),
+\end{equation}
+where $(x_i, y_i)$ are the $i$-th state-action pair in of task $k$ in the training batch on step $t$. We estimate $A_{\pi_t}$ using the z-score estimator used by group-based RL algorithms such as GRPO~\citep{grpo2024} and GSPO~\citep{gspo2025}.
+
+Compared to the standard RL post-training loop, this estimation only requires an additional forward pass of the improved policy $\pi_{t+1}$ to compute the importance sampling ratio $\frac{\pi_{t+1}(y_i\mid x_i)}{\pi_{t}(y_i\mid x_i)}$. This is a negligible overhead compared to the cost of rollout generation or backpropagation.
+
+\subsection{Curvature Estimation}
+What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
 \begin{equation} \label{eq:theil-sen}
 \widehat g_{t,kj}
 =

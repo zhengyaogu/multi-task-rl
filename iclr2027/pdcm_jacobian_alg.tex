@@ -12,7 +12,8 @@ dual bound $\Lambda>0$.
 \STATE Maintain a history of size $H$ of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=t-H}^{t-1}$ and allocation-response Jacobians $\{\widehat G_\tau\}_{\tau=t-H}^{t-1}$ and allocations $\{p_\tau\}_{\tau=t-H}^{t-1}$.
 
 \FOR{$t=1,\ldots,T$}
-    \STATE Obtain $\pi_t$ through policy update under allocation $p_{t-1}$; observe the task-wise improvement vector
+    \STATE Obtain $\pi_t$ through policy update under allocation $p_{t-1}$.
+    \STATE Compute the task-wise improvement vector
     \[
     \widehat U_t
     =
@@ -20,41 +21,15 @@ dual bound $\Lambda>0$.
     \widehat U_{t,1},\ldots,\widehat U_{t,K}
     \bigr)^\top.
     \]
+    by \Cref{eq:policy_improvement_estimation}.
 
-    \STATE Estimate the allocation-response Jacobian
-    $\widehat G_t
-    =
-    \begin{bmatrix}
-    \widehat g_{t,1}^{\top}\\
-    \vdots\\
-    \widehat g_{t,K}^{\top}
-    \end{bmatrix}$. \label{alg:pdcm_jacobian:jacobian_estimation}
+    \STATE Estimate the Jacobian $\widehat G_t$ by \Cref{eq:theil-sen}.
 
-    \STATE Compute the linearized uniform-reference lag
-    \[
-    h_{t,k}
-    \gets
-    \left\langle
-    \widehat g_{t,k},
-    u-p_t
-    \right\rangle
-    -
-    \epsilon.
-    \qquad
-    \forall k \in [K]
-    \]
+    \STATE Compute the primal scores $s_t$ by \Cref{eq:dual_weighted_marginal_utility_vectorized}.
 
-    \STATE Compute the dual-weighted marginal utility
-    \begin{equation} \label{eq:dual_weighted_marginal_utility_vectorized}
-    s_t
-    \gets
-    \widehat G_t^\top
-    \bigl(\mathbf{1}+\lambda_t\bigr).
-    \end{equation}
+    \STATE Update the primal allocation $p_{t+1}$ by entropic mirror ascent using \Cref{eq:primal_update}.
 
-    \STATE Update the primal allocation by entropic mirror ascent using \Cref{eq:primal_update}.
-
-    \STATE Update the dual variables by projected gradient ascent using \Cref{eq:dual_update}.
+    \STATE Update the dual variables $\lambda_{t+1}$ by projected gradient ascent using \Cref{eq:dual_update}.
 \ENDFOR
 \end{algorithmic}
 \end{algorithm}
