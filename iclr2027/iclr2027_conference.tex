@@ -36,7 +36,7 @@
 
 
 
-\title{Allocate Don't Amputate: Online Data Allocation for Multi-Task LLM Post-Training}
+\title{Allocate Don't Operate: Online Data Allocation for Multi-Task LLM Post-Training}
 
 % Authors must not appear in the submitted version. They should be hidden
 % as long as the \iclrfinalcopy macro remains commented out below.
@@ -86,161 +86,33 @@ line spaces precede the abstract. The abstract must be limited to one
 paragraph.
 \end{abstract}
 
-\section{Methods}
-% TODO(drafting note, not for the paper): pdcm_theory is good for an appendix
-% section, but it is not well-organized or well-motivated enough for the main
-% text. This section is the new, better-motivated outline.
+\section{Introduction}
+Post-training has become a central stage in the development of modern large language models, transforming a pre-trained model into one that can reliably follow instructions~\citep{ouyang2022training}, reason over complex inputs~\citep{deep-seek-r1}, and interact with users across a broad range of applications~\citep{openclaw-rl2026,yue2026interactivebenchmarks}. In practice, this stage is rarely optimized for a single task or capability. Instead, post-training data typically mixes many heterogeneous tasks, including mathematical reasoning, coding, factual question answering, instruction following, tool use, and other domain-specific problems, often within the each mini-batch or the same training run. As a result, post-training is naturally a multi-task learning problem~\citep{nvidia2025nemotron3nanoopen}. Each optimization step must decide not only how to update the model, but also how limited training resources should be distributed across tasks with different levels of difficulty, learning dynamics, and rates of improvement.
 
-\textbf{1.} Given a sampling distribution
-\[
-    p_t=(p_{t,1},\ldots,p_{t,K})\in
-    \DeltaK
-    \coloneqq
-    \left\{p\in\R_+^K:\sum_{k=1}^K p_k=1\right\}.
-\]
-By performance difference lemma~\citep{Kakade2002ApproximatelyOA},
-the \textit{policy improvement} is
-\begin{equation}
-\label{eq:policy_improvement_is}
-U_t(p_t)
-\coloneqq
-J(\pi_{t+1}) - J(\pi_t) = 
-\mathbb{E}_{x\sim \mathcal{X}} \left[
-\mathbb{E}_{y\sim \pi_t(\cdot\mid x)}
-\left[
-\frac{\pi_{t+1}(y\mid x)}
-{\pi_{t}(y\mid x)}
-A_{\pi_{t}}(y\mid x)
-\right]\right],
-\end{equation}
-where $\pi_{t+1}$ is the one-step improved policy with respect to the sampling distribution $p_t$.
-The goal of non-asymptotic RL post-training is to maximize the total
-policy improvement over $T$ iterations:
-\begin{equation}
-    \max_{p_t \in \Delta_K}J(\pi_T) - J(\pi_0) = \max_{p_t \in \Delta_K} \sum_{t=0}^{T-1} U_t(p_t).
-\end{equation}
-However, maximizing the total policy improvement can lead to skewed development
-over tasks that should otherwise be treated equally. To address this, 
-we introduce the following constraint that no task should be left behind
-what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
-\begin{equation} \label{eq:constraint_uniform_baseline}
-\sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
-\end{equation}
-In practice, it is cost-prohibitive to estimate 
-$U_{t, k}\left( u \right)$, as it involves computing the
-counterfactual policy improvement of a uniform baseline. Recent work~\citep{datamixinglaws2024,aioli2025,autoscale2025} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We take this as our standing assumption.
-\begin{assumption}[Approximate concavity of task response]
-\label{asm:concavity}
-For every task $k\in[K]$ and iteration $t$, the task-wise utility $U_{t,k}$ admits a
-supergradient $g_{t,k}=\nabla U_{t,k}(p_t)$ with respect to the sampling distribution
-$p_t$, so that
-\begin{equation} \label{eq:constraint_upper_bound}
-U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle .
-\end{equation}
-\end{assumption}
-\Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being a more conservative constraint. This leads to the following constrained optimization problem:
-\begin{equation} \label{eq:constrained_optimization_problem}
-\begin{aligned}
-\max_{p_t \in \Delta_K} & \quad \sum_{t=0}^{T-1} U_t(p_t) \\
-\text{s.t.} & \quad \sum_{t = 1}^T \langle g_{t, k}, u - p_t \rangle \leq \epsilon, \quad \forall k\in[K], \forall t\in[T].
-\end{aligned}
-\end{equation}
+Existing multi-task learning methods from the deep learning era often rely on one of two broad pathways: expensive gradient-surgery procedures that explicitly compute and manipulate task-wise gradients~\citep{pcgrad2020,cagrad2021}, or fairness- and multi-objective-aware methods whose guarantees hinge on the model's asymptotic behavior~\citep{cagrad2021,sener2018mgda}, such as convergence to balanced or Pareto-stationary solutions. While these approaches provide principled mechanisms for addressing task interference or balancing objectives, neither pathway can be relied upon directly for LLM post-training. Gradient-based procedures become increasingly costly as model size and the number of tasks grow, while asymptotic guarantees are inappropriate when training is deliberately stopped far before convergence. These methods therefore do not directly address the central question to the finite-budget LLM post-training: how should examples from different tasks be allocated at each step so that training resources are used where they are most effective?
 
-\subsection{Primal-Dual Curvature Matching}
-To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
-\begin{equation} \label{eq:primal_update}
-p_{t+1,j}
-= 
-\frac{p_{t,j}\exp(\eta_p s_{t,j})}
-{\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})},
-\end{equation}
-where $s_{t,j}$ is the corresponding score of task $j$ at iteration $t$. In a generic PDMD formulation, this score combines the gradient of the primal objective with dual-weighted gradients of the constraints. In Problem~\labelcref{eq:constrained_optimization_problem}, however, the task-wise counterfactual constraints are linearized surrogates of the same task-wise utility functions that define the primal objective. Consequently, the task-wise score $s_{t, j}$ is obtained by amplifying the marginal-utility signal in $g_{t, k}$ according to the current lag pressure encoded by $\lambda_t$.
-\begin{equation} \label{eq:dual_weighted_marginal_utility_vectorized}
-s_t
-=
-G_t^\top \left( \mathbf{1} + \lambda_t \right)
-\qquad
-\text{, where }
-G_t
-    =
-    \begin{bmatrix}
-    g_{t,1}^{\top}\\
-    \vdots\\
-    g_{t,K}^{\top}
-    \end{bmatrix}
-\end{equation}
-The lag pressure $\lambda_t$ is accumulated over iterations through projected dual ascent. Specifically, for each task $k$,
-\begin{equation} \label{eq:dual_update}
-\lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
-\end{equation}
-where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textbf{\textit{Primal-Dual Curvature Matching}} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
+In this paper, we formulate multi-task post-training as a constrained online convex optimization problem over task allocation, leading to a lightweight algorithm we call \textbf{\textit{Primal-Dual Curvature Matching}} (PDCM). At each training step, we dynamically compute a task-mixture distribution that maximizes total policy improvement, subject to task-wise constraints that prevent any individual task from falling too far behind. We make this problem tractable by \textbf{linearizing the task-wise constraints} under a diminishing-returns assumption on the improvement surface. Unlike approaches that require a stringent parametric model of the task-improvement dynamics, such as the assumption in previous data mixing work~\citep{chen2025aioli}, our constraints only assume directional concavity. The resulting formulation admits a mirror-descent-like update rule that adjusts each task's training quota according to its marginal policy improvement with respect to allocation. The proposed method acts as a \textbf{lightweight control layer} over the task proportions of each mini-batch and incurs \textbf{negligible overhead} compared with the baseline training procedure. This control layer continuously shifts training resources toward tasks with stronger short-term returns and reallocates them as those returns diminish, while task-wise constraints keep progress balanced across tasks.
 
-\input{pdcm_jacobian_alg.tex}
+\textcolor{red}{We need to add a paragraph about the empirical performance of PDCM, as the results come in.}
 
-The adaptive allocation in PDCM is intended to exploit temporal variation in task-wise marginal utility. The following result shows that this adaptivity remains asymptotically competitive with any fixed feasible allocation, including the uniform mixture, while simultaneously controlling cumulative task-wise lag.
+Our contributions are summarized as follows:
+\begin{itemize}
+\item We formulate multi-task post-training as a constrained optimization problem over task allocation, maximizing cumulative policy improvement while requiring each task to remain close to its per-step policy improvement under a uniform-allocation counterfactual; we further derive a tractable formulation by linearizing these constraints under a directional concavity assumption based on previous empirical works~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing}.
 
-\begin{theorem}[Constrained no-regret of PDCM]
-\label{thm:pdcm_no_regret}
-Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable and \Cref{asm:concavity} holds. Let $F_t(p) = \mathbf{1}^T U_t(p)$ denote the total policy improvement at iteration $t$, and let
-\[
-p_T^\star
-\in
-\arg\max_{p\in\mathcal P_T}
-\sum_{t=1}^T F_t(p)
-\]
-denote the best fixed feasible allocation in hindsight. If
-$\eta_p,\eta_\lambda=\Theta(T^{-1/2})$, then PDCM satisfies
-\begin{equation}
-\sum_{t=1}^T
-\left[
-F_t(p_T^\star)-F_t(p_t)
-\right]
-=
-O(\sqrt{T}),
-\end{equation}
-while, for every task $k$,
-\begin{equation}
-\left[
-\sum_{t=1}^T
-\left(
-U_{t,k}(u)-U_{t,k}(p_t)-\epsilon_{t,k}
-\right)
-\right]_+
-=
-O(\sqrt{T}).
-\end{equation}
-Consequently, both the average regret and the average excess counterfactual lag vanish at rate
-$O(T^{-1/2})$.
-\end{theorem}
+\item We introduce \textbf{Primal-Dual Curvature Matching (PDCM)}, a \textbf{lightweight task-allocation} algorithm that dynamically adjusts per-task training quotas using observed marginal policy improvement and task-wise constraint signals. We provide theoretical guarantees on both cumulative utility and constraint violation under the resulting primal-dual updates.
 
-\subsection{Policy Improvement Estimation}
-The performance difference lemma formulation of policy improvement in \Cref{eq:policy_improvement_is} provides a convenient way to estimate the task-wise policy improvement $U_{t,k}$ using off-policy evaluation~\citep{ope2000}. Specifically, we use generated rollouts from the training batch to estimate the task-wise policy improvement as
-\begin{equation} \label{eq:policy_improvement_estimation}
-\widehat U_{t,k}
-=
-\frac{1}{N_k}\sum_{i=1}^{N_k}
-\frac{\pi_{t+1}(y_i\mid x_i)}
-{\pi_{t}(y_i\mid x_i)}
-A_{\pi_{t}}(y_i\mid x_i),
-\end{equation}
-where $(x_i, y_i)$ are the $i$-th state-action pair in of task $k$ in the training batch on step $t$. We estimate $A_{\pi_t}$ using the z-score estimator used by group-based RL algorithms such as GRPO~\citep{grpo2024} and GSPO~\citep{gspo2025}.
+\item We evaluate PDCM across both \textbf{agentic and non-agentic} multi-task post-training settings and show that dynamic task allocation improves finite-budget training efficiency over static task mixtures, gradient-surgery methods, and multi-objective methods with asymptotic guarantees, while maintaining balanced progress across tasks. These gains come with negligible computational overhead relative to the underlying training procedure. Furthermore, we show that PDCM, which relies only on a non-parametric concavity assumption on the task improvement surface, consistently outperforms the existing data-allocation method~\citep{chen2025aioli} which rely on stronger parametric assumptions.
 
-Compared to the standard RL post-training loop, this estimation only requires an additional forward pass of the improved policy $\pi_{t+1}$ to compute the importance sampling ratio $\frac{\pi_{t+1}(y_i\mid x_i)}{\pi_{t}(y_i\mid x_i)}$. This is a negligible overhead compared to the cost of rollout generation or backpropagation.
+\end{itemize}
 
-\subsection{Curvature Estimation}
-What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
-\begin{equation} \label{eq:theil-sen}
-\widehat g_{t,kj}
-=
-\operatorname*{median}_{\substack{1\le a<b\le t-1\\ |p_{b,j}-p_{a,j}|>\delta}}
-\frac{\widehat U_{b,k}-\widehat U_{a,k}}{p_{b,j}-p_{a,j}} .
-\qquad
-\forall k\in[K], j\in[K].
-\end{equation}
+\begin{figure*}
+    \centering
+    \includegraphics[width=\textwidth]{fig/pdcm_main_fig.pdf}
+    \caption{Overview of the PDCM method for multi-task post-training.}
+    \label{fig:pdcm_overview}
+\end{figure*}
 
-
-
-
+\input{sections/method.tex}
 
 \input{iclr2027/pdcm_theory}
 
@@ -306,6 +178,8 @@ acknowledgments, including those to funding agencies, go at the end of the paper
 \bibliographystyle{iclr2027_conference}
 
 \appendix
+
+
 \section{Appendix}
 You may include other additional sections here.
 
