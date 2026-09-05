@@ -58,6 +58,8 @@ U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle 
 \end{aligned}
 \end{equation}
 
+\input{fig/pdcm_main_fig.tex}
+
 \subsection{Primal-Dual Curvature Matching}
 To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
 \begin{equation} \label{eq:primal_update}
