@@ -1,46 +1,14 @@
-\section{Methods}
-% TODO(drafting note, not for the paper): pdcm_theory is good for an appendix
-% section, but it is not well-organized or well-motivated enough for the main
-% text. This section is the new, better-motivated outline.
-
-\textbf{1.} Given a sampling distribution
-\[
-    p_t=(p_{t,1},\ldots,p_{t,K})\in
-    \DeltaK
-    \coloneqq
-    \left\{p\in\R_+^K:\sum_{k=1}^K p_k=1\right\}.
-\]
-By performance difference lemma~\citep{Kakade2002ApproximatelyOA},
-the \textit{policy improvement} of task $k$ is
-\begin{equation}
-\label{eq:policy_improvement_is}
-U_{t, k}(p_t)
-\coloneqq
-J(\pi_{t+1}) - J(\pi_t) = 
-\mathbb{E}_{x\sim \mathcal{X}_k} \left[
-\mathbb{E}_{y\sim \pi_t(\cdot\mid x)}
-\left[
-\frac{\pi_{t+1}(y\mid x)}
-{\pi_{t}(y\mid x)}
-A_{\pi_{t}}(y\mid x)
-\right]\right],
-\end{equation}
-where $\mathcal{X}_k$ is the input space for task $k$ and $\pi_{t+1}$ is the one-step improved policy with respect to the sampling distribution $p_t$.
-The goal of non-asymptotic RL post-training is to maximize the total
-policy improvement over $T$ iterations:
-\begin{equation}
-    \max_{p_t \in \Delta_K}J(\pi_T) - J(\pi_0) = \max_{p_t \in \Delta_K} \sum_{t=0}^{T-1} U_t(p_t),
-\end{equation}
-where $U_t(p_t) = \sum_{k = 1}^K U_{t, k}(p_t)$. However, maximizing the total policy improvement can lead to skewed development
+\section{Primal-Dual Curvature Matching} \label{sec:method}
+Naively maximizing the total policy improvement in \Cref{eq:bg_telescope} can lead to skewed development
 over tasks that should otherwise be treated equally. To address this, 
-we introduce the following constraint that no task should be left behind
+we enforce the following constraint that prevents any task from falling behind
 what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
 \begin{equation} \label{eq:constraint_uniform_baseline}
 \sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
 \end{equation}
 In practice, it is cost-prohibitive to estimate 
 $U_{t, k}\left( u \right)$, as it involves computing the
-counterfactual policy improvement of a uniform baseline. Recent work~\citep{datamixinglaws2024,aioli2025,autoscale2025} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We take this as our standing assumption.
+counterfactual policy improvement of a uniform baseline. Recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We take this as our standing assumption.
 \begin{assumption}[Directional concavity of task response]
 \label{asm:concavity}
 For every task $k\in[K]$ and iteration $t$, the task-wise utility $U_{t,k}$ admits a
@@ -128,7 +96,7 @@ $O(T^{-1/2})$.
 \end{theorem}
 
 \subsection{Policy Improvement Estimation}
-The performance difference lemma formulation of policy improvement in \Cref{eq:policy_improvement_is} provides a convenient way to estimate the task-wise policy improvement $U_{t,k}$ using off-policy evaluation~\citep{ope2000}. Specifically, we use generated rollouts from the training batch to estimate the task-wise policy improvement as
+The performance difference lemma~\citep{Kakade2002ApproximatelyOA} expresses the task-wise policy improvement $U_{t,k}$ as an expectation, over rollouts drawn from $\pi_t$, of the advantage $A_{\pi_t}$ reweighted by the importance ratio $\pi_{t+1}/\pi_t$. This makes $U_{t,k}$ a convenient target for off-policy evaluation~\citep{ope2000}: we reuse the rollouts already generated for the training batch and estimate the task-wise policy improvement as
 \begin{equation} \label{eq:policy_improvement_estimation}
 \widehat U_{t,k}
 =
@@ -151,4 +119,3 @@ What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimat
 \qquad
 \forall k\in[K], j\in[K].
 \end{equation}
-
