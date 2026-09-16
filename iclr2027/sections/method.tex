@@ -56,7 +56,7 @@ The lag pressure $\lambda_t$ is accumulated over iterations through projected du
 \begin{equation} \label{eq:dual_update}
 \lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
 \end{equation}
-where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textbf{\textit{Primal-Dual Curvature Matching}} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
+where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textit{Primal-Dual Curvature Matching} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
 
 \input{pdcm_jacobian_alg.tex}
 
