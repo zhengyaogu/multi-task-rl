@@ -1,0 +1,49 @@
+\section{Agentic Suite Data}
+\label{app:agentic-data}
+
+\begin{table}[t]
+\centering
+\small
+\setlength{\tabcolsep}{8pt}
+\begin{tabular}{@{}llrrl@{}}
+\toprule
+Task & Capability & \# Train & \# Test & Test set \\
+\midrule
+instruction\_following & constraint following   & 45891 & 300 & \textbf{IF-Bench} (held out) \\
+code\_gen              & program synthesis      & 23971 & 322 & in-distribution \\
+xlam\_fc               & function / tool calling& 59000 & 1000& in-distribution \\
+workplace\_assistant   & multi-turn assistant   & 1255  & 545 & in-distribution \\
+\bottomrule
+\end{tabular}
+\caption{Agentic multi-task suite. Instruction following is trained on a constraint-following
+pool and evaluated on the held-out IF-Bench benchmark; the other three tasks use in-distribution
+test splits. Sizes are the number of served problems.}
+\label{tab:agentic}
+\end{table}
+
+\section{Reasoning-Gym Data Generation}
+\label{app:rg-generation}
+
+All six reasoning tasks are generated procedurally with Reasoning-Gym~\citep{reasoninggym}
+using a single builder that fixes the prompt template, answer schema, difficulty schedule, and
+random seeding, so every instance is fully reproducible and paired with a deterministic,
+rule-based verifier.
+
+\paragraph{Difficulty control.}
+Difficulty is set at generation time through each task's generator configuration rather than by
+post-hoc filtering. Five tasks are produced at three levels---\emph{easy}, \emph{medium}, and
+\emph{hard}---and \texttt{puzzle24} is produced as a single un-tiered level (its curriculum is
+degenerate). The controlling knob per task is:
+\begin{itemize}
+  \item \textbf{word\_sorting}: the Reasoning-Gym \texttt{WordSortingCurriculum} global level
+        ($0/1/2$ for easy/medium/hard) under upper-bound range semantics, which widens the
+        number-of-words and word-length ranges as difficulty increases.
+  \item \textbf{manipulate\_matrix}: a fixed $10{\times}10$ integer grid with the number of chained
+        transformations set to $1/3/5$ for easy/medium/hard. We scale difficulty by transformation
+        \emph{depth} rather than grid size, because larger grids inflate the target answer beyond
+        the response-length budget.
+  \item \textbf{puzzle24}: the generator default. The operand values, $[1,10]$, are evenly split between three difficulty levels.
+  \item \textbf{arc}, \textbf{countdown}, \textbf{zebra}: generated at the same three-level
+        (easy/medium/hard) convention; the three tasks above are produced to be schema-compatible
+        with them so all six share one training/evaluation pipeline.
+\end{itemize}

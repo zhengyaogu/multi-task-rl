@@ -1,2 +1,5 @@
 # Local build output; not part of the Overleaf project.
 build/
+
+# macOS Finder metadata.
+.DS_Store

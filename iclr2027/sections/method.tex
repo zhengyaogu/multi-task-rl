@@ -1,14 +1,15 @@
 \section{Primal-Dual Curvature Matching} \label{sec:method}
-Naively maximizing the total policy improvement in \Cref{eq:bg_telescope} can lead to skewed development
-over tasks that should otherwise be treated equally. To address this, 
-we enforce the following constraint that prevents any task from falling behind
+As we discussed in \Cref{sec:bg_allocation}, naively maximizing the total policy improvement in \Cref{eq:bg_telescope} can lead to skewed development
+over tasks that should otherwise be treated equally.  
+We add the following constraint that prevents any task from falling behind
 what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
 \begin{equation} \label{eq:constraint_uniform_baseline}
 \sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
 \end{equation}
-In practice, it is cost-prohibitive to estimate 
+\Cref{eq:constraint_uniform_baseline} marks a departure from the parametric constraint used in previous work~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,kang2025autoscalescaleawaredatamixing}, by enforcing an upper-limit on the step-wise allocation deficit. In practice, it is cost-prohibitive to estimate 
 $U_{t, k}\left( u \right)$, as it involves computing the
-counterfactual policy improvement of a uniform baseline. Recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} suggests that the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We take this as our standing assumption.
+counterfactual policy improvement of a uniform baseline. We relax the parametric assumptions in recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} to one in which the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. 
+
 \begin{assumption}[Directional concavity of task response]
 \label{asm:concavity}
 For every task $k\in[K]$ and iteration $t$, the task-wise utility $U_{t,k}$ admits a

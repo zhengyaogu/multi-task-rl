@@ -5,16 +5,26 @@
 % Optional math commands from https://github.com/goodfeli/dlbook_notation.
 \input{math_commands.tex}
 
-\usepackage{hyperref}
-\usepackage{url}
-
 %algorithms
 \usepackage{algorithm}
 \usepackage{algorithmic}
 
+\usepackage{hyperref}
+\usepackage{url}
+
+
 % Preamble required by \input{iclr2027/pdcm_theory}; see the header comment at
 % the top of that file. \R and \KL come from math_commands.tex.
 \usepackage{amsthm,mathtools}
+
+% \lesssim/\gtrsim (used in sections/experiments.tex) come from amssymb.
+\usepackage{amssymb}
+
+% Side figure with text wrapped around it (sections/background.tex).
+\usepackage{wrapfig}
+
+% Rules for the results table (fig/main_table.tex).
+\usepackage{booktabs}
 
 
 \newcommand{\DeltaK}{\Delta_K}
@@ -90,9 +100,11 @@ paragraph.
 
 \input{sections/background.tex}
 
+\input{sections/related_work.tex}
+
 \input{sections/method.tex}
 
-\input{iclr2027/pdcm_theory}
+\input{sections/experiments.tex}
 
 \subsection*{AI use statement}
 
@@ -155,11 +167,12 @@ acknowledgments, including those to funding agencies, go at the end of the paper
 \bibliography{iclr2027_conference}
 \bibliographystyle{iclr2027_conference}
 
+\newpage
+
 \appendix
 
-
-\section{Appendix}
-You may include other additional sections here.
+\input{sections/appendix.tex}
+\input{iclr2027/pdcm_theory}
 
 
 \end{document}

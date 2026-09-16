@@ -1,0 +1,40 @@
+% Main results table. Generated from the run sheet; totals verified against
+% the per-task numbers. Requires \usepackage{booktabs}.
+%
+% Uniform = static 1/K mixture; Single = per-task specialists (confirmed).
+\begin{table}[t]
+\centering
+\caption{\textbf{Multi-task post-training results.} Per-task accuracy (\%) on the
+Nemo-Gym (four tasks) and ACZ (three tasks) suites, at pass@1 and pass@4.
+\textbf{PDCM} is our method; \textbf{Uniform} holds the mixture fixed at $u=1/K$,
+\textbf{Single} trains one specialist per task, \textbf{PCGrad}~\citep{pcgrad2020}
+resolves gradient conflicts, and \textbf{Aioli}~\citep{chen2025aioli} allocates under a
+parametric mixing law. Per row, the best result is in \textbf{bold} and the second best is
+\underline{underlined}; \emph{Total} is the sum over a suite's tasks.}
+\vspace{0.2cm}
+\label{tab:main}
+\footnotesize
+\setlength{\tabcolsep}{3pt}
+\begin{tabular}{l rrrrr rrrrr}
+\toprule
+ & \multicolumn{5}{c}{pass@1} & \multicolumn{5}{c}{pass@4} \\
+\cmidrule(lr){2-6} \cmidrule(lr){7-11}
+Task & PDCM & Uniform & Single & PCGrad & Aioli & PDCM & Uniform & Single & PCGrad & Aioli \\
+\midrule
+\multicolumn{11}{l}{\textit{Nemo-Gym}} \\
+\texttt{code\_gen} & 32.61 & 34.08 & 31.29 & \underline{34.39} & \textbf{35.40} & \textbf{43.50} & 41.41 & 37.73 & 42.43 & \underline{43.29} \\
+\texttt{IF} & \textbf{53.33} & 47.58 & 36.63 & \underline{51.00} & 47.79 & \textbf{60.38} & 54.57 & 45.76 & \underline{58.81} & 52.09 \\
+\texttt{workplace} & \textbf{82.89} & 81.74 & \underline{82.61} & 74.72 & 82.11 & 83.35 & 84.00 & \underline{86.46} & 75.15 & \textbf{87.97} \\
+\texttt{xlam} & \textbf{84.35} & 74.87 & \underline{83.57} & 82.92 & 82.32 & \textbf{84.28} & 80.70 & 83.91 & 83.19 & \underline{84.10} \\
+\cmidrule(lr){1-11}
+Total & \textbf{253.18} & 238.27 & 234.10 & 243.03 & \underline{247.62} & \textbf{271.51} & 260.68 & 253.86 & 259.58 & \underline{267.45} \\
+\midrule
+\multicolumn{11}{l}{\textit{ACZ}} \\
+ARC-1D & \textbf{66.33} & \underline{61.28} & 50.08 & 29.29 & 58.17 & \textbf{80.37} & \underline{77.39} & 66.60 & 39.88 & 70.53 \\
+Countdown & \underline{91.83} & 91.06 & 88.09 & 89.92 & \textbf{92.33} & \underline{94.48} & 94.43 & 91.80 & 92.69 & \textbf{94.56} \\
+Zebra & \underline{91.08} & \textbf{91.12} & 87.79 & 79.42 & 90.54 & \textbf{97.21} & 96.68 & 95.47 & 89.25 & \underline{96.91} \\
+\cmidrule(lr){1-11}
+Total & \textbf{249.24} & \underline{243.46} & 225.96 & 198.63 & 241.04 & \textbf{272.06} & \underline{268.50} & 253.87 & 221.82 & 262.00 \\
+\bottomrule
+\end{tabular}
+\end{table}
