@@ -12,8 +12,8 @@ dual bound $\Lambda>0$.
 \STATE Maintain a history of size $H$ of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=t-H}^{t-1}$ and allocation-response Jacobians $\{\widehat G_\tau\}_{\tau=t-H}^{t-1}$ and allocations $\{p_\tau\}_{\tau=t-H}^{t-1}$.
 
 \FOR{$t=1,\ldots,T$}
-    \STATE Obtain $\pi_t$ through policy update under allocation $p_{t-1}$.
-    \STATE Compute the task-wise improvement vector
+    \STATE Obtain $\pi_t$ through policy update under allocation $p_{t-1}$. \COMMENT{\textcolor{blue}{RL step.}}
+    \STATE Compute the task-wise improvement vector by \Cref{eq:policy_improvement_estimation}.
     \[
     \widehat U_t
     =
@@ -21,13 +21,13 @@ dual bound $\Lambda>0$.
     \widehat U_{t,1},\ldots,\widehat U_{t,K}
     \bigr)^\top.
     \]
-    by \Cref{eq:policy_improvement_estimation}.
+    \COMMENT{\textcolor{blue}{Extra forward pass with the updated policy.}}
 
-    \STATE Estimate the Jacobian $\widehat G_t$ by \Cref{eq:theil-sen}.
+    \STATE Estimate the Jacobian $\widehat G_t$ by \Cref{eq:theil-sen}. \COMMENT{\textcolor{blue}{Applies Theil-Sen regression to estimate first-order sensitivity.}}
 
     \STATE Compute the primal scores $s_t$ by \Cref{eq:dual_weighted_marginal_utility_vectorized}.
 
-    \STATE Update the primal allocation $p_{t+1}$ by entropic mirror ascent using \Cref{eq:primal_update}.
+    \STATE Update the primal allocation $p_{t+1}$ by entropic mirror ascent using \Cref{eq:primal_update}.  \COMMENT{\textcolor{blue}{Exponential weight update.}}
 
     \STATE Update the dual variables $\lambda_{t+1}$ by projected gradient ascent using \Cref{eq:dual_update}.
 \ENDFOR

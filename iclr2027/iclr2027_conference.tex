@@ -8,6 +8,9 @@
 %algorithms
 \usepackage{algorithm}
 \usepackage{algorithmic}
+% algorithmic's \COMMENT wraps its argument in literal braces by default;
+% use the right-aligned triangle familiar from algpseudocode instead.
+\renewcommand{\algorithmiccomment}[1]{\hfill$\triangleright$~\textit{#1}}
 
 \usepackage{hyperref}
 \usepackage{url}
@@ -89,11 +92,23 @@ Address \\
 \maketitle
 
 \begin{abstract}
-The abstract paragraph should be indented 1/2~inch (3~picas) on both left and
-right-hand margins. Use 10~point type, with a vertical spacing of 11~points.
-The word \textsc{Abstract} must be centered, in small caps, and in point size 12. Two
-line spaces precede the abstract. The abstract must be limited to one
-paragraph.
+Post-training a large language model rarely targets a single capability: a typical run mixes
+coding, tool-calling, mathematical reasoning, and instruction following. Classical multi-task
+learning studies this setting through the lenses of gradient interference and fairness,
+motivating methods such as gradient surgery and MGDA. These fit post-training poorly.
+Gradient-surgery methods must materialize per-task gradients at a cost that grows with both the
+number of tasks and the size of the model, while multi-objective methods target asymptotic
+balance in runs that stop well before convergence. We instead take the per-task quota of each
+mini-batch as the only control variable, casting multi-task post-training as online convex
+optimization: maximize cumulative policy improvement subject to a ``no-task-left-behind''
+constraint. Assuming only directional concavity of the task-improvement surface, that
+constraint relaxes into a linear one computable from quantities already available at the
+current allocation. This yields \textbf{Primal-Dual Curvature Matching} (PDCM), a
+mirror-descent-like allocator driven by first-order estimates of how policy improvement
+responds to allocation, and unlike allocation methods developed for LLM pre-training it
+presumes no parametric model of training dynamics. By controlling batch composition alone, PDCM
+leads the uniform baseline on pass@1 by as much as $6.3\%$ and consistently beats gradient-surgery and parametric mixing methods. 
+Additionally, it scales to mixtures of up to $18$ tasks, holding a margin a much as $5.3\%$ over the uniform baseline with an increasing number of tasks.
 \end{abstract}
 
 \input{sections/intro}

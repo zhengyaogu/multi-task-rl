@@ -1,29 +1,53 @@
 \section{Related Work}
-\subsection{Aioli}
-\label{sec:bg_constrained_allocation}
+\label{sec:related_work}
 
-A natural approach to task allocation is to optimize the mixture according to a model of how allocation affects subsequent training progress. Aioli and its predecessors ~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,chen2023skillitdatadrivenskillsframework,xie2023doremioptimizingdatamixtures,fan2024dogedomainreweightinggeneralization} formalizes this idea through the following fomalization.
-\begin{equation}
-\label{eq:bg_lmo}
-\max_{p_1,\ldots,p_T\in\Delta^K}\ \sum_{t=1}^{T} U_t(p_t)
-\quad \text{s.t.}\quad
-U_{t,k}(p_t)
-    =
-    \phi_k \left( \sum_{j=1}^{K} A_{t,kj}p_{t,j} \right)
-\ \forall k,t.
-\end{equation}
-where $\phi_k$ specifies the shape of the scaling law. $A_t\in\mathbb{R}^{K\times K}$ models cross-task interactions. Through \Cref{eq:bg_lmo}, the current mixture is mapped to future task improvements through a parametric cross-task response matrix, and the next allocation is chosen according to these predicted gains. Aioli's allocation score for task $j$ aggregates its predicted effect across all tasks,
-$s_{t,j}=\sum_{k=1}^{K}A_{t,kj}$, leading to an exponential update of the form
-\begin{equation}
-\label{eq:bg_aioli_update}
-    p_{t+1,j}
-    =
-    \frac{
-        p_{t,j}\exp\!\left(\eta s_{t,j}\right)
-    }{
-        \sum_{\ell=1}^{K}
-        p_{t,\ell}\exp\!\left(\eta s_{t,\ell}\right)
-    }.
-\end{equation}
+\paragraph{Multi-task optimization via gradient and loss manipulation.}
+A large body of work modifies the joint update to mitigate task conflict, either by
+combining per-task gradients, PCGrad \citep{pcgrad2020}, CAGrad \citep{cagrad2021},
+MGDA \citep{sener2018mgda}, and the Nash bargaining solution of Nash-MTL 
+\citep{nash-mtl2022}, or by adaptively reweighting losses, as in GradNorm
+\citep{chen2018gradnormgradientnormalizationadaptive}, uncertainty weighting \citep{kendall2018multitasklearningusinguncertainty}, and FAMO
+\citep{liu2023famofastadaptivemultitask}, which balances progress in $O(1)$ space and time rather than storing
+all per-task gradients. Simpler alternatives such as random loss weighting
+\citep{lin2022reasonableeffectivenessrandomweighting} and unitary scalarization \citep{unitary2022kurin} match these
+methods. \citep{unitary2022kurin} found no clear advantage of aforementioned methods against PCGrad, so we do not expect further variants to
+change our conclusions.
 
-This formulation makes dynamic allocation tractable by prescribing a functional relationship between allocation and future training progress. \textbf{PDCM retains the constrained-optimization view, but does not require such a parametric response law.} Instead, it uses a single-step directional concavity condition to construct first-order constraints directly from the observed task-improvement.
+\paragraph{Data mixture and domain reweighting.}
+For pre-training, domain weights are set by proxy-model or parametric methods: DoReMi
+\citep{xie2023doremioptimizingdatamixtures}, DoGE \citep{fan2024dogedomainreweightinggeneralization}, Skill-it \citep{chen2023skillitdatadrivenskillsframework},
+data-mixing laws \citep{li2025datamixingoptimizationsupervised}, RegMix \citep{liu2025regmixdatamixtureregression},  and AutoScale
+\citep{kang2025autoscalescaleawaredatamixing}, with online variants ODM \citep{albalak2023efficientonlinedatamixing},  ADO
+\citep{jiang2024adaptivedataoptimizationdynamic}, and Aioli \citep{chen2025aioli}. Fine-tuning studies examine SFT
+composition and interference \citep{dong-etal-2024-abilities}. These fit a mixing law or
+bandit weights against a proxy loss. PDCM optimizes cumulative \emph{policy improvement}
+online under a no-task-left-behind constraint, without a parametric mixing law.
+
+% \subsection{Aioli}
+% \label{sec:bg_constrained_allocation}
+
+% A natural approach to task allocation is to optimize the mixture according to a model of how allocation affects subsequent training progress. Aioli and its predecessors ~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,chen2023skillitdatadrivenskillsframework,xie2023doremioptimizingdatamixtures,fan2024dogedomainreweightinggeneralization} formalizes this idea through the following fomalization.
+% \begin{equation}
+% \label{eq:bg_lmo}
+% \max_{p_1,\ldots,p_T\in\Delta^K}\ \sum_{t=1}^{T} U_t(p_t)
+% \quad \text{s.t.}\quad
+% U_{t,k}(p_t)
+%     =
+%     \phi_k \left( \sum_{j=1}^{K} A_{t,kj}p_{t,j} \right)
+% \ \forall k,t.
+% \end{equation}
+% where $\phi_k$ specifies the shape of the scaling law. $A_t\in\mathbb{R}^{K\times K}$ models cross-task interactions. Through \Cref{eq:bg_lmo}, the current mixture is mapped to future task improvements through a parametric cross-task response matrix, and the next allocation is chosen according to these predicted gains. Aioli's allocation score for task $j$ aggregates its predicted effect across all tasks,
+% $s_{t,j}=\sum_{k=1}^{K}A_{t,kj}$, leading to an exponential update of the form
+% \begin{equation}
+% \label{eq:bg_aioli_update}
+%     p_{t+1,j}
+%     =
+%     \frac{
+%         p_{t,j}\exp\!\left(\eta s_{t,j}\right)
+%     }{
+%         \sum_{\ell=1}^{K}
+%         p_{t,\ell}\exp\!\left(\eta s_{t,\ell}\right)
+%     }.
+% \end{equation}
+
+% This formulation makes dynamic allocation tractable by prescribing a functional relationship between allocation and future training progress. \textbf{PDCM retains the constrained-optimization view, but does not require such a parametric response law.} Instead, it uses a single-step directional concavity condition to construct first-order constraints directly from the observed task-improvement.

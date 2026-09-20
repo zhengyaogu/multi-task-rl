@@ -58,8 +58,6 @@ The lag pressure $\lambda_t$ is accumulated over iterations through projected du
 \end{equation}
 where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textbf{\textit{Primal-Dual Curvature Matching}} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
 
-\input{pdcm_jacobian_alg.tex}
-
 The adaptive allocation in PDCM is intended to exploit temporal variation in task-wise marginal utility. The following result shows that this adaptivity remains asymptotically competitive with any fixed feasible allocation, including the uniform mixture, while simultaneously controlling cumulative task-wise lag.
 
 \begin{theorem}[Constrained no-regret of PDCM]
@@ -109,6 +107,8 @@ A_{\pi_{t}}(y_i\mid x_i),
 where $(x_i, y_i)$ are the $i$-th state-action pair in of task $k$ in the training batch on step $t$. We estimate $A_{\pi_t}$ using the z-score estimator used by group-based RL algorithms such as GRPO~\citep{grpo2024} and GSPO~\citep{gspo2025}.
 
 Compared to the standard RL post-training loop, this estimation only requires an additional forward pass of the improved policy $\pi_{t+1}$ to compute the importance sampling ratio $\frac{\pi_{t+1}(y_i\mid x_i)}{\pi_{t}(y_i\mid x_i)}$. This is a negligible overhead compared to the cost of rollout generation or backpropagation.
+
+\input{pdcm_jacobian_alg.tex}
 
 \subsection{Curvature Estimation}
 What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
