@@ -1,5 +1,24 @@
-\section{Agentic Suite Data}
-\label{app:agentic-data}
+\section{Data}
+\label{app:data}
+\paragraph{Nemo-Gym.}~\citep{nemogym}
+We selected four heterogeneous tasks served from the NeMo-Gym servers, some requiring tool-use or multi-turn capabilities, some do not.
+\textbf{\texttt{IF}} draws its training prompts from the WildChat-1M dataset~\citep{zhao2024wildchat1mchatgptinteraction} with instructions from the Open-Instruct code base~\citep{ahmad2025opencodeinstructlargescaleinstructiontuning}, and is evaluated on the held-out IF-Bench~\citep{ifbench}. \textbf{\texttt{code\_gen}} contains competitive coding challenges from
+NVIDIA's OpenCodeReasoning~\citep{ahmad2025opencodereasoningadvancingdatadistillation} dataset. This dataset is served with Nemo-Gym's single-turn verification engine \texttt{code\_gen}.
+\textbf{\texttt{xlam\_fc}}~\citep{zhang2024xlamfamilylargeaction} is an API/function calling dataset in xLAM format.
+\textbf{\texttt{workplace}}~\citep{nemogym} is a tool-use multi-step agentic environment that tests the agent’s ability to execute tasks in a workplace setting such as calendar scheduling or email management.
+Tab.~\ref{tab:agentic} lists the per-task train and test sizes.
+
+
+\paragraph{Reasoning-Gym.}~\citep{reasoninggym}
+Our reasoning mixture is procedurally generated with scripts offered by Reasoning-Gym~\citep{reasoninggym}.
+Each task is instantiated at three difficulty levels (easy, medium, and hard) with 30000 training and 600 test problems. We describe the individual tasks below.
+\textbf{\texttt{ARC-1D}} is an abstract pattern-induction puzzle where the agent infers the grid transformation rule from examples.
+\textbf{\texttt{countdown}} is a numbers game in which the agent combines given numbers and fixed set of operations to hit a target.
+\textbf{\texttt{zebra}} a logic game where you use clues and deduction to match attributes across different colored houses.
+\textbf{\texttt{word\_sorting}} is an alphabetical word-sorting task.
+In \textbf{\texttt{puzzle24}}, one needs to combine four numbers and basic arithmetic operations to make 24. 
+In \textbf{\texttt{manipulate\_matrix}}, one must apply given grid operations in sequence to reach a given state.
+App.~\ref{app:rg-generation} reports the complete generation configurations.
 
 \begin{table}[t]
 \centering
@@ -21,7 +40,7 @@ test splits. Sizes are the number of served problems.}
 \label{tab:agentic}
 \end{table}
 
-\section{Reasoning-Gym Data Generation}
+\subsection{Reasoning-Gym Data Generation}
 \label{app:rg-generation}
 
 All six reasoning tasks are generated procedurally with Reasoning-Gym~\citep{reasoninggym}
@@ -35,15 +54,28 @@ post-hoc filtering. Five tasks are produced at three levels---\emph{easy}, \emph
 \emph{hard}---and \texttt{puzzle24} is produced as a single un-tiered level (its curriculum is
 degenerate). The controlling knob per task is:
 \begin{itemize}
-  \item \textbf{word\_sorting}: the Reasoning-Gym \texttt{WordSortingCurriculum} global level
+  \item \textbf{\texttt{word\_sorting}}: the Reasoning-Gym \texttt{WordSortingCurriculum} global level
         ($0/1/2$ for easy/medium/hard) under upper-bound range semantics, which widens the
         number-of-words and word-length ranges as difficulty increases.
-  \item \textbf{manipulate\_matrix}: a fixed $10{\times}10$ integer grid with the number of chained
+  \item \textbf{\texttt{manipulate\_matrix}}: a fixed $10{\times}10$ integer grid with the number of chained
         transformations set to $1/3/5$ for easy/medium/hard. We scale difficulty by transformation
         \emph{depth} rather than grid size, because larger grids inflate the target answer beyond
         the response-length budget.
-  \item \textbf{puzzle24}: the generator default. The operand values, $[1,10]$, are evenly split between three difficulty levels.
-  \item \textbf{arc}, \textbf{countdown}, \textbf{zebra}: generated at the same three-level
-        (easy/medium/hard) convention; the three tasks above are produced to be schema-compatible
-        with them so all six share one training/evaluation pipeline.
+  \item \textbf{\texttt{puzzle24}}: the generator default. The operand values, $[1,10]$, are evenly split between three difficulty levels.
+  \item \textbf{\texttt{arc}}, \textbf{\texttt{countdown}}, \textbf{\texttt{zebra}}: 
+These three families are drawn from Reasoning-Gym's procedural generators under their built-in
+difficulty \emph{curricula}, whose discrete levels the easy/medium/hard tiers index. \emph{Countdown} presents a multiset
+of source integers to be combined with $+,-,\times,\div$ into a target. Its
+\texttt{CountdownCurriculum} sets difficulty through three range attributes: the operand count
+(level ladder $\{3,6,9,12,15\}$), the target magnitude ($\{100,500,1000,5000,10000\}$), and the
+source-value magnitude ($\{1,100,200,300\}$). Harder tiers grant more operands and larger targets and values. \emph{Zebra} is an Einstein-style constraint-satisfaction puzzle. Its
+\texttt{ZebraPuzzleCurriculum} scales two attributes, the number of people and the number of characteristics, each over $\{2,\dots,7\}$, enlarging the constraint grid as difficulty rises.
+\emph{ARC} draws ARC-AGI-1 grid-transformation tasks and raises difficulty through two
+augmentation-weight distributions: a rotation distribution over
+$\{\text{identity},90^\circ,180^\circ,270^\circ\}$, shifted from identity-dominant
+($[0.3,0.2,0.3,0.2]$) toward rotation-dominant ($[0.0,0.4,0.2,0.4]$), and a mirror distribution over
+$\{\text{identity},\text{horizontal},\text{vertical},\text{diagonal},\text{counter-diagonal}\}$,
+shifted from simple toward diagonal mirrors ($[0.3,0.3,0.2,0.1,0.1]\!\rightarrow\![0.05,0.05,0.1,0.4,0.4]$).
+All three inherit the per-instance seeding, three-tier schedule, and \verb|\boxed{}| answer schema of
+the other tasks.
 \end{itemize}

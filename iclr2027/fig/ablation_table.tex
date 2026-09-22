@@ -1,0 +1,27 @@
+\begin{table}[t]
+\centering
+\caption{Effect of ablating the dual variable~$\lambda$ in \textsc{PDCM}, on the four mix4 (IF-split)
+tasks. We compare full \textsc{PDCM}, \textsc{PDCM} with the dual term removed
+(\textsc{PDCM}$_{-\lambda}$), the even-split baseline (Uniform), and \textsc{OSMD} applied directly
+without \textsc{PDCM}'s primal--dual constraint (\textsc{OSMD}), at pass@1 and pass@4. Best per task in
+\textbf{bold}, second best in \underline{underline} (among \textsc{PDCM}, \textsc{PDCM}$_{-\lambda}$,
+and Uniform; \textsc{OSMD} is excluded from ranking).}
+\label{tab:lambda-ablation}
+\setlength{\tabcolsep}{3.4pt}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{l cccc c cccc}
+\toprule
+ & \multicolumn{4}{c}{\textbf{pass@1}} & & \multicolumn{4}{c}{\textbf{pass@4}} \\
+\cmidrule(lr){2-5} \cmidrule(lr){7-10}
+Task & PDCM & PDCM$_{-\lambda}$ & Uniform & OSMD & & PDCM & PDCM$_{-\lambda}$ & Uniform & OSMD \\
+\midrule
+code\_gen  & \underline{32.61}  & 32.14           & \textbf{34.08} & 38.97 & & \underline{40.55}  & 39.37           & \textbf{41.41} & 46.57 \\
+IF         & \textbf{53.33}     & \underline{48.33} & 47.58        & 43.08 & & \textbf{61.21}     & \underline{59.74} & 54.57        & 48.79 \\
+workplace  & \textbf{82.89}     & \underline{81.65} & 81.74        & 80.41 & & \textbf{88.15}     & \underline{84.51} & 84.00        & 83.30 \\
+xlam       & \textbf{84.35}     & 82.45           & 74.87          & 75.19 & & \textbf{84.66}     & \underline{83.68} & 80.70        & 73.98 \\
+\midrule
+Total      & \textbf{253.18}    & \underline{244.57} & 238.27      & 237.65 & & \textbf{274.57}    & \underline{267.30} & 260.68      & 252.64 \\
+\bottomrule
+\end{tabular}}
+\end{table}

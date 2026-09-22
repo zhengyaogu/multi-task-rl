@@ -1,14 +1,12 @@
 \section{Primal-Dual Curvature Matching} \label{sec:method}
 As we discussed in \Cref{sec:bg_allocation}, naively maximizing the total policy improvement in \Cref{eq:bg_telescope} can lead to skewed development
 over tasks that should otherwise be treated equally.  
-We add the following constraint that prevents any task from falling behind
+We propose the following constraint that prevents any task from falling behind
 what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
 \begin{equation} \label{eq:constraint_uniform_baseline}
 \sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
 \end{equation}
-\Cref{eq:constraint_uniform_baseline} marks a departure from the parametric constraint used in previous work~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,kang2025autoscalescaleawaredatamixing}, by enforcing an upper-limit on the step-wise allocation deficit. In practice, it is cost-prohibitive to estimate 
-$U_{t, k}\left( u \right)$, as it involves computing the
-counterfactual policy improvement of a uniform baseline. We relax the parametric assumptions in recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} to one in which the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. 
+\Cref{eq:constraint_uniform_baseline} marks a departure from the parametric constraint used in previous work~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,kang2025autoscalescaleawaredatamixing}, by enforcing an upper-limit on the step-wise allocation deficit. In practice, estimating $U_{t, k}(u)$ requires a parallel run with uniform allocation $u$, which is cost-prohibitive. We relax the parametric assumptions in recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} to one in which the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. 
 
 \begin{assumption}[Directional concavity of task response]
 \label{asm:concavity}
@@ -27,7 +25,11 @@ U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle 
 \end{aligned}
 \end{equation}
 
+\paragraph{Remark.} While $g_{t, k}$ in principle needs to be estimated using counterfactual allocations as well, we further assume that $U_{t, k}$ is approximately static locally and estimate $g_{t,k}$ by regressing on the values of $U_{t, k}$ of previous $H$ steps (\Cref{sec:curv_est}).
+
 \input{fig/pdcm_main_fig.tex}
+
+\input{pdcm_jacobian_alg.tex}
 
 \subsection{Primal-Dual Curvature Matching}
 To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
@@ -37,7 +39,7 @@ p_{t+1,j}
 \frac{p_{t,j}\exp(\eta_p s_{t,j})}
 {\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})},
 \end{equation}
-where $s_{t,j}$ is the corresponding score of task $j$ at iteration $t$. In a generic PDMD formulation, this score combines the gradient of the primal objective with dual-weighted gradients of the constraints. In Problem~\labelcref{eq:constrained_optimization_problem}, however, the task-wise counterfactual constraints are linearized surrogates of the same task-wise utility functions that define the primal objective. Consequently, the task-wise score $s_{t, j}$ is obtained by amplifying the marginal-utility signal in $g_{t, k}$ according to the current lag pressure encoded by $\lambda_t$.
+where $s_{t,j}$ is the corresponding score of task $j$ at iteration $t$. In a generic PDMD formulation, this score combines the gradient of the primal objective with dual-weighted gradients of the constraints. In Problem~\labelcref{eq:constrained_optimization_problem}, however, the task-wise counterfactual constraints are linearized surrogates of the same task-wise utility functions that define the primal objective. Consequently, the task-wise score $s_{t, j}$ is obtained by amplifying the marginal-utility signal in $g_{t, k}$ according to the current lag pressure behind the uniform allocation encoded by $\lambda_t$.
 \begin{equation} \label{eq:dual_weighted_marginal_utility_vectorized}
 s_t
 =
@@ -108,10 +110,13 @@ where $(x_i, y_i)$ are the $i$-th state-action pair in of task $k$ in the traini
 
 Compared to the standard RL post-training loop, this estimation only requires an additional forward pass of the improved policy $\pi_{t+1}$ to compute the importance sampling ratio $\frac{\pi_{t+1}(y_i\mid x_i)}{\pi_{t}(y_i\mid x_i)}$. This is a negligible overhead compared to the cost of rollout generation or backpropagation.
 
-\input{pdcm_jacobian_alg.tex}
+\input{fig/main_table.tex}
 
 \subsection{Curvature Estimation}
+
+\label{sec:curv_est}
 What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy performance difference estimates $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
+
 \begin{equation} \label{eq:theil-sen}
 \widehat g_{t,kj}
 =
