@@ -1,15 +1,16 @@
 \begin{table}[t]
 \centering
-\caption{Effect of ablating the dual variable~$\lambda$ in \textsc{PDCM}, on the four mix4 (IF-split)
+\caption{Effect of ablating the dual variable~$\lambda$ in \textsc{PDCM}, on the four Nemo-Gym
 tasks. We compare full \textsc{PDCM}, \textsc{PDCM} with the dual term removed
 (\textsc{PDCM}$_{-\lambda}$), the even-split baseline (Uniform), and \textsc{OSMD} applied directly
 without \textsc{PDCM}'s primal--dual constraint (\textsc{OSMD}), at pass@1 and pass@4. Best per task in
 \textbf{bold}, second best in \underline{underline} (among \textsc{PDCM}, \textsc{PDCM}$_{-\lambda}$,
 and Uniform; \textsc{OSMD} is excluded from ranking).}
+\vspace{-0.1in}
 \label{tab:lambda-ablation}
 \setlength{\tabcolsep}{3.4pt}
 \renewcommand{\arraystretch}{1.12}
-\resizebox{\textwidth}{!}{%
+\resizebox{0.87\textwidth}{!}{%
 \begin{tabular}{l cccc c cccc}
 \toprule
  & \multicolumn{4}{c}{\textbf{pass@1}} & & \multicolumn{4}{c}{\textbf{pass@4}} \\
@@ -23,5 +24,6 @@ xlam       & \textbf{84.35}     & 82.45           & 74.87          & 75.19 & & \
 \midrule
 Total      & \textbf{253.18}    & \underline{244.57} & 238.27      & 237.65 & & \textbf{274.57}    & \underline{267.30} & 260.68      & 252.64 \\
 \bottomrule
+\vspace{-\intextsep}
 \end{tabular}}
 \end{table}

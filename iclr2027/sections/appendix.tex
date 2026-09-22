@@ -79,3 +79,33 @@ shifted from simple toward diagonal mirrors ($[0.3,0.3,0.2,0.1,0.1]\!\rightarrow
 All three inherit the per-instance seeding, three-tier schedule, and \verb|\boxed{}| answer schema of
 the other tasks.
 \end{itemize}
+
+
+\section{Concavity Test}
+\label{app:concavity}
+
+\begin{figure}[t]
+  \centering
+  \includegraphics[width=0.48\textwidth]{fig/probe_code_gen_upperhull.pdf}\hfill
+  \includegraphics[width=0.48\textwidth]{fig/probe_IF_upperhull.pdf}\\[0.6em]
+  \includegraphics[width=0.48\textwidth]{fig/probe_workplace_upperhull.pdf}\hfill
+  \includegraphics[width=0.48\textwidth]{fig/probe_xlam_upperhull.pdf}
+  \caption{\textbf{Allocation response of each Nemo-Gym task.} Change in mean@4 after $10$
+  steps from a common step-$80$ checkpoint, as the probed task's share of the batch is swept
+  from $0.25$ to $0.85$ and the remaining mass is split evenly among the other three tasks.
+  Shaded region is the $95\%$ confidence band; the upper curve is its upper convex hull, the
+  tightest concave envelope the measurements admit.}
+  \label{fig:concavity_probe}
+\end{figure}
+
+\Cref{asm:concavity} asks only that task improvement respond concavely to allocation, and we
+check this directly rather than assume it. Starting from a common step-$80$ checkpoint of the
+four-task Nemo-Gym run, we probe one task at a time: its share is held at one of seven values
+from $0.25$ to $0.85$ in steps of $0.10$, the remaining budget is split evenly among the other
+three tasks, and training continues for $10$ steps. Each probe is scored by the change in
+mean@4 from the checkpoint, and repeated sampling gives the $95\%$ confidence band shown in
+\Cref{fig:concavity_probe}, against which we run an upper-convex-hull test for concavity. All
+four tasks display a concave trend over the probed range, which supports
+\Cref{asm:concavity} as a working assumption for this setting. The probe covers one checkpoint
+and one mixture, so it speaks to local rather than global concavity of the task-improvement
+surface.
