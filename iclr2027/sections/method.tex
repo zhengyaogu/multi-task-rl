@@ -29,10 +29,9 @@ U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle 
 
 \input{fig/pdcm_main_fig.tex}
 
-\input{pdcm_jacobian_alg.tex}
-
-\vspace{0.1in}
+\vspace{-0.05in}
 \subsection{Primal-Dual Curvature Matching}
+\vspace{-0.05in}
 To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
 \begin{equation} \label{eq:primal_update}
 p_{t+1,j}
@@ -55,6 +54,10 @@ G_t
     g_{t,K}^{\top}
     \end{bmatrix}
 \end{equation}
+Here, $G_t$ represents the Jacobian of the utility functions with respect to the allocation. We discuss a variant of PDCM where $G_t$ is diagonal in Appendix~\ref{app:diagonal}. 
+
+\input{pdcm_jacobian_alg.tex}
+
 The lag pressure $\lambda_t$ is accumulated over iterations through projected dual ascent. Specifically, for each task $k$,
 \begin{equation} \label{eq:dual_update}
 \lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
@@ -93,8 +96,7 @@ U_{t,k}(u)-U_{t,k}(p_t)-\epsilon_{t,k}
 =
 O(\sqrt{T}).
 \end{equation}
-Consequently, both the average regret and the average excess counterfactual lag vanish at rate
-$O(T^{-1/2})$.
+Consequently, both the average regret and the average excess counterfactual lag vanish at rate $O(T^{-1/2})$. We provide a proof of in Appendix~\ref{app:theory}.
 \end{theorem}
 
 \subsection{Policy Improvement Estimation}

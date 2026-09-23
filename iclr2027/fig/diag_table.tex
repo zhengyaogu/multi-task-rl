@@ -1,0 +1,30 @@
+% Diagonal-Jacobian ablation. Totals verified against the per-task numbers.
+\begin{table}[t]
+\centering
+\caption{Full versus diagonal Jacobian in \textsc{PDCM}, on the four Nemo-Gym tasks.
+\textsc{PDCM} estimates the full allocation-response Jacobian $G_t$;
+\textsc{PDCM}$_{\mathrm{diag}}$ keeps only its diagonal, treating each tasks improvement as a
+univariate function $\widehat U_{t,k}(p_{t,k})$ of its own share (\Cref{app:diagonal});
+Uniform is the even-split baseline. Best per task in \textbf{bold}, second best in
+\underline{underline}.}
+\vspace{-0.1in}
+\label{tab:diag-ablation}
+\setlength{\tabcolsep}{3.4pt}
+\renewcommand{\arraystretch}{1.12}
+\resizebox{0.72\textwidth}{!}{%
+\begin{tabular}{l ccc c ccc}
+\toprule
+ & \multicolumn{3}{c}{\textbf{pass@1}} & & \multicolumn{3}{c}{\textbf{pass@4}} \\
+\cmidrule(lr){2-4} \cmidrule(lr){6-8}
+Task & PDCM & PDCM$_{\mathrm{diag}}$ & Uniform & & PDCM & PDCM$_{\mathrm{diag}}$ & Uniform \\
+\midrule
+code\_gen  & 32.61 & \textbf{35.09} & \underline{34.08} & & 40.55 & \textbf{43.50} & \underline{41.41} \\
+IF         & \underline{53.33} & \textbf{53.92} & 47.58 & & \textbf{61.21} & \underline{60.38} & 54.57 \\
+workplace  & \textbf{82.89} & 79.86 & \underline{81.74} & & \textbf{88.15} & 83.35 & \underline{84.00} \\
+xlam       & \textbf{84.35} & \underline{83.95} & 74.87 & & \textbf{84.66} & \underline{84.28} & 80.70 \\
+\midrule
+Total      & \textbf{253.18} & \underline{252.82} & 238.27 & & \textbf{274.57} & \underline{271.51} & 260.68 \\
+\bottomrule
+\vspace{-\intextsep}
+\end{tabular}}
+\end{table}

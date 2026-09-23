@@ -109,3 +109,69 @@ four tasks display a concave trend over the probed range, which supports
 \Cref{asm:concavity} as a working assumption for this setting. The probe covers one checkpoint
 and one mixture, so it speaks to local rather than global concavity of the task-improvement
 surface.
+
+
+\section{Diagonal-Jacobian PDCM}
+\label{app:diagonal}
+
+\input{fig/diag_table.tex}
+
+\Cref{alg:pdcm_jacobian} estimates the full allocation-response Jacobian $G_t$, whose entry
+$g_{t,kj}$ records how task $k$'s improvement responds to task $j$'s share of the batch. A
+simpler variant keeps only the diagonal. It is worth setting out on its own, both because it is
+the regime in which our theoretical results are stated and because it is the variant whose
+signal we can estimate most reliably.
+
+The restriction amounts to assuming that each task's improvement depends on the allocation only
+through that task's own share,
+\begin{equation}
+U_{t,k}(p) \;=\; U_{t,k}(p_k), \qquad k\in[K],
+\label{eq:separable-utility}
+\end{equation}
+so the aggregate utility $U_t(p)=\sum_{k=1}^K U_{t,k}(p_k)$ is separable and each $U_{t,k}$ is a
+\emph{univariate} function of $p_k$ alone. This is exactly the object the estimator of
+\Cref{eq:policy_improvement_estimation} measures: $\widehat U_{t,k}$ is read off the rollouts
+that task $k$ received under its own share $p_{t,k}$, so the empirical quantity the controller
+actually observes is $\widehat U_{t,k}(p_{t,k})$, a scalar response to a scalar input. Under
+\Cref{eq:separable-utility} the supergradient of \Cref{asm:concavity} has a single nonzero
+coordinate, $g_{t,k}=U_{t,k}'(p_{t,k})\,e_k$, and $G_t$ collapses to
+$\operatorname{diag}(g_{t,11},\ldots,g_{t,KK})$ with $g_{t,kk}=U_{t,k}'(p_{t,k})$.
+
+Three parts of the algorithm simplify accordingly. The score of
+\Cref{eq:dual_weighted_marginal_utility_vectorized} loses its cross terms and becomes
+coordinatewise,
+\begin{equation}
+s_{t,k} \;=\; \bigl(1+\lambda_{t,k}\bigr)\, g_{t,kk},
+\label{eq:diag-score}
+\end{equation}
+so each task's score is its own marginal utility amplified by its own lag pressure, and budget
+reaches a lagging task only by being withdrawn from the others through the simplex rather than
+by exploiting cross-task transfer. The lag certificate reduces from an inner product to a
+product of scalars, $\langle g_{t,k},u-p_t\rangle = g_{t,kk}\,(u-p_{t,k})$, and the dual update
+of \Cref{eq:dual_update} follows unchanged. Finally, curvature estimation
+(\Cref{sec:curv_est}) reduces from $K^2$ entries to $K$: the Theil--Sen regression of
+\Cref{eq:theil-sen} is run once per task over the pairs
+$\{(p_{\tau,k},\widehat U_{\tau,k})\}_{\tau=t-H}^{t-1}$, and needs only variation in a task's
+own share rather than independent variation in every coordinate of $p$.
+
+The trade-off is that the diagonal variant cannot represent transfer: if training on task $j$
+raises task $k$'s return through shared parameters, that effect is invisible to
+\Cref{eq:diag-score} and is absorbed into the drift of $U_{t,k}$ over rounds. What it buys is
+conditioning. Identifying the off-diagonal entries requires the allocation to vary
+independently along every coordinate, which the controller does not deliberately produce, and
+the number of entries grows as $K^2$ while each task's share shrinks as $1/K$ --- the same
+pressure discussed in \Cref{sec:scaling}. The diagonal entries, by contrast, are identified by
+precisely the variation the primal update generates on its own. The probe of
+\Cref{app:concavity} measures this univariate response directly, sweeping $p_{t,k}$ with the
+remaining mass held even, and is therefore a test of \Cref{asm:concavity} in exactly the
+diagonal form used by \Cref{thm:no-regret}.
+
+\Cref{tab:diag-ablation} compares the two variants on the four Nemo-Gym tasks. Both clear the
+uniform baseline comfortably, and their totals are close: the diagonal variant trails the full
+Jacobian by $0.36$ points at pass@1 and $3.06$ at pass@4. The per-task pattern is more
+informative than the totals. $\texttt{PDCM}_{\mathrm{diag}}$ is the stronger of the two on
+$\texttt{code\_gen}$ at both metrics and edges ahead on $\texttt{IF}$ at pass@1, but it gives up
+$3.03$ points on $\texttt{workplace}$ at pass@1 and $4.80$ at pass@4, the task whose gains the
+full Jacobian attributes most strongly to allocation elsewhere in the mixture. Discarding the
+off-diagonal entries therefore costs little in aggregate while removing the mechanism by which
+one task's budget is credited with another's improvement.
