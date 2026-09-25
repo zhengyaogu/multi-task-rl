@@ -12,7 +12,7 @@ MGDA \citep{sener2018mgda}, and the Nash bargaining solution of Nash-MTL
 \citep{liu2023famofastadaptivemultitask}, which balances progress in $O(1)$ space and time rather than storing
 all per-task gradients. Simpler alternatives such as random loss weighting
 \citep{lin2022reasonableeffectivenessrandomweighting} and unitary scalarization \citep{unitary2022kurin} match these
-methods. \citep{unitary2022kurin} found no clear advantage of aforementioned methods against PCGrad, so we do not expect further variants to
+methods. \citep{unitary2022kurin} found no clear advantage of the aforementioned methods against PCGrad, so we do not expect further variants to
 change our conclusions.
 
 \vspace{-0.1in}
@@ -25,6 +25,8 @@ data-mixing laws \citep{li2025datamixingoptimizationsupervised}, RegMix \citep{l
 composition and interference \citep{dong-etal-2024-abilities}. These fit a mixing law or
 bandit weights against a proxy loss. PDCM optimizes cumulative \emph{policy improvement}
 online under a no-task-left-behind constraint, without a parametric mixing law.
+
+The closest prior formulation, Aioli~\citep{chen2025aioli}, casts pre-training data mixing as the same kind of optimization problem but closes it with a power mixing law tailored to pre-training dynamics (\Cref{sec:related_work}). PDCM assumes only directional concavity of the task-improvement and utilizes local first-order information without over-prescribing the general shape of the learning curve.
 
 % \subsection{Aioli}
 % \label{sec:bg_constrained_allocation}

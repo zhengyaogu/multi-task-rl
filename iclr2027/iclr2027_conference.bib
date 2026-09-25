@@ -32,31 +32,33 @@ publisher={MIT Press}
 }
 
 @article{mahdavi2011trading,
-  author       = {Mehrdad Mahdavi and
-                  Rong Jin and
-                  Tianbao Yang},
-  title        = {Trading Regret for Efficiency: Online Convex Optimization with Long
-                  Term Constraints},
-  journal      = {CoRR},
-  volume       = {abs/1111.6082},
-  year         = {2011},
-  url          = {http://arxiv.org/abs/1111.6082},
-  eprinttype   = {arXiv},
-  eprint       = {1111.6082},
-  timestamp    = {Wed, 15 Dec 2021 17:59:53 +0100},
-  biburl       = {https://dblp.org/rec/journals/corr/abs-1111-6082.bib},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
+  author  = {Mehrdad Mahdavi and Rong Jin and Tianbao Yang},
+  title   = {Trading Regret for Efficiency: Online Convex Optimization with Long Term Constraints},
+  journal = {Journal of Machine Learning Research},
+  year    = {2012},
+  volume  = {13},
+  number  = {81},
+  pages   = {2503--2528},
+  url     = {http://jmlr.org/papers/v13/mahdavi12a.html}
 }
 
-@misc{jenatton2015adaptivealgorithmsonlineconvex,
-      title={Adaptive Algorithms for Online Convex Optimization with Long-term Constraints}, 
-      author={Rodolphe Jenatton and Jim Huang and Cédric Archambeau},
-      year={2015},
-      eprint={1512.07422},
-      archivePrefix={arXiv},
-      primaryClass={stat.ML},
-      url={https://arxiv.org/abs/1512.07422}, 
+@InProceedings{jenatton2015adaptivealgorithmsonlineconvex,
+  title = 	 {Adaptive Algorithms for Online Convex Optimization with Long-term Constraints},
+  author = 	 {Jenatton, Rodolphe and Huang, Jim and Archambeau, Cedric},
+  booktitle = 	 {Proceedings of The 33rd International Conference on Machine Learning},
+  pages = 	 {402--411},
+  year = 	 {2016},
+  editor = 	 {Balcan, Maria Florina and Weinberger, Kilian Q.},
+  volume = 	 {48},
+  series = 	 {Proceedings of Machine Learning Research},
+  address = 	 {New York, New York, USA},
+  month = 	 {20--22 Jun},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v48/jenatton16.pdf},
+  url = 	 {https://proceedings.mlr.press/v48/jenatton16.html},
+  abstract = 	 {We present an adaptive online gradient descent algorithm to solve online convex optimization problems with long-term constraints, which are constraints that need to be satisfied when accumulated over a finite number of rounds T, but can be violated in intermediate rounds. For some user-defined trade-off parameter βin (0, 1), the proposed algorithm achieves cumulative regret bounds of O(T^maxβ,1_β) and O(T^1_β/2), respectively for the loss and the constraint violations. Our results hold for convex losses, can handle arbitrary convex constraints and rely on a single computationally efficient algorithm. Our contributions improve over the best known cumulative regret bounds of Mahdavi et al. (2012), which are respectively O(T^1/2) and O(T^3/4) for general convex domains, and respectively O(T^2/3) and O(T^2/3) when the domain is further restricted to be a polyhedral set. We supplement the analysis with experiments validating the performance of our algorithm in practice.}
 }
+
 
 @misc{wei2019onlineprimaldualmirrordescent,
       title={Online Primal-Dual Mirror Descent under Stochastic Constraints}, 
@@ -126,18 +128,16 @@ series = {ICML '00}
 }
 
 @inproceedings{ouyang2022training,
-author = {Ouyang, Long and Wu, Jeff and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll L. and Mishkin, Pamela and Zhang, Chong and Agarwal, Sandhini and Slama, Katarina and Ray, Alex and Schulman, John and Hilton, Jacob and Kelton, Fraser and Miller, Luke and Simens, Maddie and Askell, Amanda and Welinder, Peter and Christiano, Paul and Leike, Jan and Lowe, Ryan},
-title = {Training language models to follow instructions with human feedback},
-year = {2022},
-isbn = {9781713871088},
-publisher = {Curran Associates Inc.},
-address = {Red Hook, NY, USA},
-abstract = {Making language models bigger does not inherently make them better at following a user's intent. For example, large language models can generate outputs that are untruthful, toxic, or simply not helpful to the user. In other words, these models are not aligned with their users. In this paper, we show an avenue for aligning language models with user intent on a wide range of tasks by fine-tuning with human feedback. Starting with a set of labeler-written prompts and prompts submitted through a language model API, we collect a dataset of labeler demonstrations of the desired model behavior, which we use to fine-tune GPT-3 using supervised learning. We then collect a dataset of rankings of model outputs, which we use to further fine-tune this supervised model using reinforcement learning from human feedback. We call the resulting models InstructGPT. In human evaluations on our prompt distribution, outputs from the 1.3B parameter InstructGPT model are preferred to outputs from the 175B GPT-3, despite having 100x fewer parameters. Moreover, InstructGPT models show improvements in truthfulness and reductions in toxic output generation while having minimal performance regressions on public NLP datasets. Even though InstructGPT still makes simple mistakes, our results show that fine-tuning with human feedback is a promising direction for aligning language models with human intent.},
-booktitle = {Proceedings of the 36th International Conference on Neural Information Processing Systems},
-articleno = {2011},
-numpages = {15},
-location = {New Orleans, LA, USA},
-series = {NIPS '22}
+ author = {Ouyang, Long and Wu, Jeffrey and Jiang, Xu and Almeida, Diogo and Wainwright, Carroll and Mishkin, Pamela and Zhang, Chong and Agarwal, Sandhini and Slama, Katarina and Ray, Alex and Schulman, John and Hilton, Jacob and Kelton, Fraser and Miller, Luke and Simens, Maddie and Askell, Amanda and Welinder, Peter and Christiano, Paul F and Leike, Jan and Lowe, Ryan},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/068431-2011},
+ editor = {S. Koyejo and S. Mohamed and A. Agarwal and D. Belgrave and K. Cho and A. Oh},
+ pages = {27730--27744},
+ publisher = {Curran Associates, Inc.},
+ title = {Training language models to follow instructions with human feedback},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2022/file/b1efde53be364a73914f58805a001731-Paper-Conference.pdf},
+ volume = {35},
+ year = {2022}
 }
 
 @article{deep-seek-r1,
@@ -218,24 +218,24 @@ year={2025},
 url={https://openreview.net/forum?id=sZGZJhaNSe}
 }
 
-@misc{ye2025datamixinglawsoptimizing,
-      title={Data Mixing Laws: Optimizing Data Mixtures by Predicting Language Modeling Performance}, 
-      author={Jiasheng Ye and Peiju Liu and Tianxiang Sun and Jun Zhan and Yunhua Zhou and Xipeng Qiu},
-      year={2025},
-      eprint={2403.16952},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2403.16952}, 
+@inproceedings{ye2025datamixinglawsoptimizing,
+ author = {Ye, Jiasheng and Liu, Peiju and Sun, Tianxiang and Zhan, Jun and Zhou, Yunhua and Qiu, Xipeng},
+ booktitle = {International Conference on Learning Representations},
+ editor = {Y. Yue and A. Garg and N. Peng and F. Sha and R. Yu},
+ pages = {82263--82287},
+ title = {Data Mixing Laws: Optimizing Data Mixtures by Predicting Language Modeling Performance},
+ url = {https://proceedings.iclr.cc/paper_files/paper/2025/file/cc84bfabe6389d8883fc2071c848f62a-Paper-Conference.pdf},
+ volume = {2025},
+ year = {2025}
 }
 
-@misc{kang2025autoscalescaleawaredatamixing,
-      title={AutoScale: Scale-Aware Data Mixing for Pre-Training LLMs}, 
-      author={Feiyang Kang and Yifan Sun and Bingbing Wen and Si Chen and Dawn Song and Rafid Mahmood and Ruoxi Jia},
-      year={2025},
-      eprint={2407.20177},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2407.20177}, 
+@inproceedings{
+kang2025autoscalescaleawaredatamixing,
+title={AutoScale: Scale-Aware Data Mixing for Pre-Training {LLM}s},
+author={Feiyang Kang and Yifan Sun and Bingbing Wen and Si Chen and Dawn Song and Rafid Mahmood and Ruoxi Jia},
+booktitle={Second Conference on Language Modeling},
+year={2025},
+url={https://openreview.net/forum?id=rujwIvjooA}
 }
 
 @misc{nemotronposttrainingv3,
@@ -257,14 +257,31 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
       url={https://arxiv.org/abs/2512.20848}, 
 }
 
-@misc{wu2025imbalancedgradientsrlposttraining,
-      title={Imbalanced Gradients in RL Post-Training of Multi-Task LLMs}, 
-      author={Runzhe Wu and Ankur Samanta and Ayush Jain and Scott Fujimoto and Jeongyeol Kwon and Ben Kretzu and Youliang Yu and Kaveh Hassani and Boris Vidolov and Yonathan Efroni},
-      year={2025},
-      eprint={2510.19178},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2510.19178}, 
+@inproceedings{wu2025imbalancedgradientsrlposttraining,
+    title = "Imbalanced Gradients in {RL} Post-Training of Multi-Task {LLM}s",
+    author = "Wu, Runzhe  and
+      Samanta, Ankur  and
+      Jain, Ayush  and
+      Fujimoto, Scott  and
+      Kwon, Jeongyeol  and
+      Kretzu, Ben  and
+      Yu, Youliang  and
+      Hassani, Kaveh  and
+      Vidolov, Boris  and
+      Efroni, Yonathan",
+    editor = "Demberg, Vera  and
+      Inui, Kentaro  and
+      Marquez, Llu{\'i}s",
+    booktitle = "Findings of the {A}ssociation for {C}omputational {L}inguistics: {EACL} 2026",
+    month = mar,
+    year = "2026",
+    address = "Rabat, Morocco",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2026.findings-eacl.164/",
+    doi = "10.18653/v1/2026.findings-eacl.164",
+    pages = "3137--3150",
+    ISBN = "979-8-89176-386-9",
+    abstract = "Multi-task post-training of large language models (LLMs) is typically performed by mixing datasets from different tasks and optimizing them jointly. This approach implicitly assumes that all tasks contribute gradients of similar magnitudes; when this assumption fails, optimization becomes biased toward large-gradient tasks. In this paper, however, we show that this assumption fails in RL post-training: certain tasks produce significantly larger gradients, thus biasing updates toward those tasks. Such gradient imbalance would be justified only if larger gradients implied larger learning gains on the tasks (i.e., larger performance improvements){---}but we find this is not true. Large-gradient tasks can achieve similar or even much lower learning gains than small-gradient ones. Further analyses reveal that these gradient imbalances cannot be explained by typical training statistics such as training rewards or advantages, suggesting that they arise from the \textit{inherent} differences between tasks. This cautions against naive dataset mixing and calls for future work on principled gradient-level corrections for LLMs."
 }
 
 @article{sheng2024hybridflow,
@@ -274,72 +291,90 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
   journal = {arXiv preprint arXiv: 2409.19256}
 }
 
-@misc{chen2023skillitdatadrivenskillsframework,
-      title={Skill-it! A Data-Driven Skills Framework for Understanding and Training Language Models}, 
-      author={Mayee F. Chen and Nicholas Roberts and Kush Bhatia and Jue Wang and Ce Zhang and Frederic Sala and Christopher Ré},
-      year={2023},
-      eprint={2307.14430},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2307.14430}, 
+@inproceedings{chen2023skillitdatadrivenskillsframework,
+ author = {Chen, Mayee and Roberts, Nicholas and Bhatia, Kush and WANG, Jue and Zhang, Ce and Sala, Frederic and R\'{e}, Christopher},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/075280-1562},
+ editor = {A. Oh and T. Naumann and A. Globerson and K. Saenko and M. Hardt and S. Levine},
+ pages = {36000--36040},
+ publisher = {Curran Associates, Inc.},
+ title = {Skill-it! A data-driven skills framework for understanding and training language models},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2023/file/70b8505ac79e3e131756f793cd80eb8d-Paper-Conference.pdf},
+ volume = {36},
+ year = {2023}
 }
 
-@misc{xie2023doremioptimizingdatamixtures,
-      title={DoReMi: Optimizing Data Mixtures Speeds Up Language Model Pretraining}, 
-      author={Sang Michael Xie and Hieu Pham and Xuanyi Dong and Nan Du and Hanxiao Liu and Yifeng Lu and Percy Liang and Quoc V. Le and Tengyu Ma and Adams Wei Yu},
-      year={2023},
-      eprint={2305.10429},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2305.10429}, 
+@inproceedings{xie2023doremioptimizingdatamixtures,
+ author = {Xie, Sang Michael and Pham, Hieu and Dong, Xuanyi and Du, Nan and Liu, Hanxiao and Lu, Yifeng and Liang, Percy S and Le, Quoc V and Ma, Tengyu and Yu, Adams Wei},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/075280-3059},
+ editor = {A. Oh and T. Naumann and A. Globerson and K. Saenko and M. Hardt and S. Levine},
+ pages = {69798--69818},
+ publisher = {Curran Associates, Inc.},
+ title = {DoReMi: Optimizing Data Mixtures Speeds Up Language Model Pretraining},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2023/file/dcba6be91359358c2355cd920da3fcbd-Paper-Conference.pdf},
+ volume = {36},
+ year = {2023}
 }
 
-@misc{fan2024dogedomainreweightinggeneralization,
-      title={DoGE: Domain Reweighting with Generalization Estimation}, 
-      author={Simin Fan and Matteo Pagliardini and Martin Jaggi},
-      year={2024},
-      eprint={2310.15393},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2310.15393}, 
+@InProceedings{fan2024dogedomainreweightinggeneralization,
+  title = 	 {{DOGE}: Domain Reweighting with Generalization Estimation},
+  author =       {Fan, Simin and Pagliardini, Matteo and Jaggi, Martin},
+  booktitle = 	 {Proceedings of the 41st International Conference on Machine Learning},
+  pages = 	 {12895--12915},
+  year = 	 {2024},
+  editor = 	 {Salakhutdinov, Ruslan and Kolter, Zico and Heller, Katherine and Weller, Adrian and Oliver, Nuria and Scarlett, Jonathan and Berkenkamp, Felix},
+  volume = 	 {235},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {21--27 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://raw.githubusercontent.com/mlresearch/v235/main/assets/fan24e/fan24e.pdf},
+  url = 	 {https://proceedings.mlr.press/v235/fan24e.html},
+  abstract = 	 {The coverage and composition of the pretraining data significantly impacts the generalization ability of Large Language Models (LLMs). Despite its importance, recent LLMs still rely on heuristics and trial and error to increase or reduce the influence of data-domains. We propose DOmain reweighting with Generalization Estimation (DoGE), which optimizes the probability of sampling from each domain (domain weights) in a principled way. Our approach is a two stage process consisting (i) training a proxy model to obtain domain weights using a bi-level optimization algorithm; (ii) training a larger base model by sampling training domains according to the learnt domain weights. In our experiments, we extensively show how DoGE improves the generalization of the base model to any target data mixture. On the SlimPajama dataset, our base model gets a better perplexity and few-shot reasoning accuracies across 6 tasks compared to baseline methods. Moreover, aiming to generalize to out-of-domain target tasks, which is unseen in the pretraining corpus (OOD domain), DoGE can effectively identify inter-domain dependencies, consistently achieves better test perplexity on the target domain.}
 }
 
-% TODO(cite): placeholder for Reasoning-Gym -- verify authors, year, and eprint
-% against the real reference before submission.
-@misc{reasoninggym,
-  title  = {Reasoning Gym: Reasoning Environments for Reinforcement Learning with Verifiable Rewards},
-  author = {{Reasoning Gym contributors}},
-  year   = {2025},
-  note   = {TODO: verify bibliographic details},
-  howpublished = {\url{https://github.com/open-thought/reasoning-gym}}
+@inproceedings{reasoninggym,
+ author = {Stojanovski, Zafir and Stanley, Oliver and Sharratt, Joe and Jones, Richard and Adefioye, Abdulhakeem and Kaddour, Jean and K\"{o}pf, Andreas},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/085713-1913},
+ editor = {D. Belgrave and C. Zhang and H. Lin and R. Pascanu and P. Koniusz and M. Ghassemi and N. Chen},
+ pages = {},
+ publisher = {Curran Associates, Inc.},
+ title = {Reasoning Gym: Reasoning Environments for Reinforcement Learning with Verifiable Rewards},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2025/file/528d56195a2c77c808494c86fa7c77ad-Paper-Datasets_and_Benchmarks_Track.pdf},
+ volume = {38, Main Conference},
+ year = {2025}
 }
 
 % TODO(cite): verify NeMo-Gym reference before submission.
 @misc{nemogym,
-  title  = {NeMo-Gym},
-  author = {{NVIDIA}},
-  year   = {2025},
-  note   = {TODO: verify bibliographic details}
+  title = {NeMo Gym: An Open Source Library for Scaling Reinforcement Learning Environments for LLM},
+  howpublished = {\url{https://github.com/NVIDIA-NeMo/Gym}},
+  author={NVIDIA},
+  year = {2025},
+  note = {GitHub repository},
 }
 
-
-@article{ifbench,
-  title   = {Generalizing Verifiable Instruction Following},
-  author  = {Valentina Pyatkin and Saumya Malik and Victoria Graf and Hamish Ivison and Shengyi Huang and Pradeep Dasigi and Nathan Lambert and Hannaneh Hajishirzi},
-  journal = {Advances in Neural Information Processing Systems},
-  volume  = {38},
-  year    = {2025}
+@inproceedings{ifbench,
+ author = {Pyatkin, Valentina and Malik, Saumya and Graf, Victoria and Ivison, Hamish and Huang, Shengyi and Dasigi, Pradeep and Lambert, Nathan and Hajishirzi, Hanna},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/085713-1645},
+ editor = {D. Belgrave and C. Zhang and H. Lin and R. Pascanu and P. Koniusz and M. Ghassemi and N. Chen},
+ pages = {},
+ publisher = {Curran Associates, Inc.},
+ title = {Generalizing Verifiable Instruction Following},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2025/file/46499a0622ecf568b72d17b61e45dbd5-Paper-Datasets_and_Benchmarks_Track.pdf},
+ volume = {38, Main Conference},
+ year = {2025}
 }
 
-
-@misc{zhao2024wildchat1mchatgptinteraction,
-      title={WildChat: 1M ChatGPT Interaction Logs in the Wild}, 
-      author={Wenting Zhao and Xiang Ren and Jack Hessel and Claire Cardie and Yejin Choi and Yuntian Deng},
-      year={2024},
-      eprint={2405.01470},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2405.01470}, 
+@inproceedings{
+zhao2024wildchat1mchatgptinteraction,
+title={WildChat: 1M Chat{GPT} Interaction Logs in the Wild},
+author={Wenting Zhao and Xiang Ren and Jack Hessel and Claire Cardie and Yejin Choi and Yuntian Deng},
+booktitle={The Twelfth International Conference on Learning Representations},
+year={2024},
+url={https://openreview.net/forum?id=Bl8u7ZRlbM}
 }
 
 @misc{ahmad2025opencodeinstructlargescaleinstructiontuning,
@@ -362,11 +397,36 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
       url={https://arxiv.org/abs/2504.01943}, 
 }
 
-@article{zhang2024xlamfamilylargeaction,
-  title={xLAM: A Family of Large Action Models to Empower AI Agent Systems}, 
-  author={Zhang, Jianguo  and Lan, Tian  and Zhu, Ming  and Liu, Zuxin and Hoang, Thai and Kokane, Shirley and Yao, Weiran and Tan, Juntao and Prabhakar, Akshara and Chen, Haolin and Liu, Zhiwei and Feng, Yihao and Awalgaonkar, Tulika and Murthy, Rithesh and Hu, Eric and Chen, Zeyuan and Xu, Ran and Niebles, Juan Carlos and Heinecke, Shelby and Wang, Huan and Savarese, Silvio and Xiong, Caiming},
-  journal={arXiv preprint arXiv:2409.03215},
-  year={2024}
+@inproceedings{zhang2024xlamfamilylargeaction,
+    title = "x{LAM}: A Family of Large Action Models to Empower {AI} Agent Systems",
+    author = "Zhang, Jianguo  and
+      Lan, Tian  and
+      Zhu, Ming  and
+      Liu, Zuxin  and
+      Hoang, Thai  and
+      Kokane, Shirley  and
+      Yao, Weiran  and
+      Tan, Juntao  and
+      Liu, Zhiwei  and
+      Feng, Yihao  and
+      Niebles, Juan Carlos  and
+      Heinecke, Shelby  and
+      Wang, Huan  and
+      Savarese, Silvio  and
+      Xiong, Caiming",
+    editor = "Chiruzzo, Luis  and
+      Ritter, Alan  and
+      Wang, Lu",
+    booktitle = "Proceedings of the 2025 Conference of the Nations of the Americas Chapter of the Association for Computational Linguistics: Human Language Technologies (Volume 1: Long Papers)",
+    month = apr,
+    year = "2025",
+    address = "Albuquerque, New Mexico",
+    publisher = "Association for Computational Linguistics",
+    url = "https://aclanthology.org/2025.naacl-long.578/",
+    doi = "10.18653/v1/2025.naacl-long.578",
+    pages = "11583--11597",
+    ISBN = "979-8-89176-189-6",
+    abstract = "Autonomous agents powered by large language models (LLMs) have attracted significant research interest. However, the open-source community faces many challenges in developing specialized models for agent tasks, driven by the scarcity of high-quality agent datasets and the absence of standard protocols in this area. We introduce xLAM, a series of large action models designed for AI agent tasks. The xLAM series includes five models with both dense and mixture-of-expert architectures, ranging from 1B to 8x22B parameters, trained using a scalable, flexible pipeline that unifies, augments, and synthesizes diverse datasets to enhance AI agents' generalizability and performance across varied environments. Our experimental results demonstrate that xLAM consistently delivers exceptional performance across multiple agent ability benchmarks, notably securing the 1st position on the Berkeley Function-Calling Leaderboard, outperforming GPT-4, Claude-3, and many other models in terms of tool use. By releasing the xLAM series, we aim to advance the performance of open-source LLMs for autonomous AI agents, potentially accelerating progress and democratizing access to high-performance models for agent tasks."
 }
 
 @misc{nvidia-nemotron-post-training-v3,
@@ -376,54 +436,68 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
   note = {Hugging Face dataset collection, accessed 2026-09-19},
 }
 
-@misc{nash-mtl2022,
-      title={Multi-Task Learning as a Bargaining Game}, 
-      author={Aviv Navon and Aviv Shamsian and Idan Achituve and Haggai Maron and Kenji Kawaguchi and Gal Chechik and Ethan Fetaya},
-      year={2022},
-      eprint={2202.01017},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2202.01017}, 
+@InProceedings{nash-mtl2022,
+  title = 	 {Multi-Task Learning as a Bargaining Game},
+  author =       {Navon, Aviv and Shamsian, Aviv and Achituve, Idan and Maron, Haggai and Kawaguchi, Kenji and Chechik, Gal and Fetaya, Ethan},
+  booktitle = 	 {Proceedings of the 39th International Conference on Machine Learning},
+  pages = 	 {16428--16446},
+  year = 	 {2022},
+  editor = 	 {Chaudhuri, Kamalika and Jegelka, Stefanie and Song, Le and Szepesvari, Csaba and Niu, Gang and Sabato, Sivan},
+  volume = 	 {162},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {17--23 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://proceedings.mlr.press/v162/navon22a/navon22a.pdf},
+  url = 	 {https://proceedings.mlr.press/v162/navon22a.html},
+  abstract = 	 {In Multi-task learning (MTL), a joint model is trained to simultaneously make predictions for several tasks. Joint training reduces computation costs and improves data efficiency; however, since the gradients of these different tasks may conflict, training a joint model for MTL often yields lower performance than its corresponding single-task counterparts. A common method for alleviating this issue is to combine per-task gradients into a joint update direction using a particular heuristic. In this paper, we propose viewing the gradients combination step as a bargaining game, where tasks negotiate to reach an agreement on a joint direction of parameter update. Under certain assumptions, the bargaining problem has a unique solution, known as the <em>Nash Bargaining Solution</em>, which we propose to use as a principled approach to multi-task learning. We describe a new MTL optimization procedure, Nash-MTL, and derive theoretical guarantees for its convergence. Empirically, we show that Nash-MTL achieves state-of-the-art results on multiple MTL benchmarks in various domains.}
 }
 
-@misc{chen2018gradnormgradientnormalizationadaptive,
-      title={GradNorm: Gradient Normalization for Adaptive Loss Balancing in Deep Multitask Networks}, 
-      author={Zhao Chen and Vijay Badrinarayanan and Chen-Yu Lee and Andrew Rabinovich},
-      year={2018},
-      eprint={1711.02257},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/1711.02257}, 
+@InProceedings{chen2018gradnormgradientnormalizationadaptive,
+  title = 	 {{G}rad{N}orm: Gradient Normalization for Adaptive Loss Balancing in Deep Multitask Networks},
+  author =       {Chen, Zhao and Badrinarayanan, Vijay and Lee, Chen-Yu and Rabinovich, Andrew},
+  booktitle = 	 {Proceedings of the 35th International Conference on Machine Learning},
+  pages = 	 {794--803},
+  year = 	 {2018},
+  editor = 	 {Dy, Jennifer and Krause, Andreas},
+  volume = 	 {80},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {10--15 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {http://proceedings.mlr.press/v80/chen18a/chen18a.pdf},
+  url = 	 {https://proceedings.mlr.press/v80/chen18a.html},
+  abstract = 	 {Deep multitask networks, in which one neural network produces multiple predictive outputs, can offer better speed and performance than their single-task counterparts but are challenging to train properly. We present a gradient normalization (GradNorm) algorithm that automatically balances training in deep multitask models by dynamically tuning gradient magnitudes. We show that for various network architectures, for both regression and classification tasks, and on both synthetic and real datasets, GradNorm improves accuracy and reduces overfitting across multiple tasks when compared to single-task networks, static baselines, and other adaptive multitask loss balancing techniques. GradNorm also matches or surpasses the performance of exhaustive grid search methods, despite only involving a single asymmetry hyperparameter $\alpha$. Thus, what was once a tedious search process that incurred exponentially more compute for each task added can now be accomplished within a few training runs, irrespective of the number of tasks. Ultimately, we will demonstrate that gradient manipulation affords us great control over the training dynamics of multitask networks and may be one of the keys to unlocking the potential of multitask learning.}
 }
 
-@misc{kendall2018multitasklearningusinguncertainty,
-      title={Multi-Task Learning Using Uncertainty to Weigh Losses for Scene Geometry and Semantics}, 
-      author={Alex Kendall and Yarin Gal and Roberto Cipolla},
-      year={2018},
-      eprint={1705.07115},
-      archivePrefix={arXiv},
-      primaryClass={cs.CV},
-      url={https://arxiv.org/abs/1705.07115}, 
+@InProceedings{kendall2018multitasklearningusinguncertainty,
+author = {Kendall, Alex and Gal, Yarin and Cipolla, Roberto},
+title = {Multi-Task Learning Using Uncertainty to Weigh Losses for Scene Geometry and Semantics},
+booktitle = {Proceedings of the IEEE Conference on Computer Vision and Pattern Recognition (CVPR)},
+month = {June},
+year = {2018}
 }
 
-@misc{liu2023famofastadaptivemultitask,
-      title={FAMO: Fast Adaptive Multitask Optimization}, 
-      author={Bo Liu and Yihao Feng and Peter Stone and Qiang Liu},
-      year={2023},
-      eprint={2306.03792},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2306.03792}, 
+@inproceedings{liu2023famofastadaptivemultitask,
+ author = {Liu, Bo and Feng, Yihao and Stone, Peter and Liu, Qiang},
+ booktitle = {Advances in Neural Information Processing Systems},
+ doi = {10.52202/075280-2500},
+ editor = {A. Oh and T. Naumann and A. Globerson and K. Saenko and M. Hardt and S. Levine},
+ pages = {57226--57243},
+ publisher = {Curran Associates, Inc.},
+ title = {FAMO: Fast Adaptive Multitask Optimization},
+ url = {https://proceedings.neurips.cc/paper_files/paper/2023/file/b2fe1ee8d936ac08dd26f2ff58986c8f-Paper-Conference.pdf},
+ volume = {36},
+ year = {2023}
 }
 
-@misc{lin2022reasonableeffectivenessrandomweighting,
-      title={Reasonable Effectiveness of Random Weighting: A Litmus Test for Multi-Task Learning}, 
-      author={Baijiong Lin and Feiyang Ye and Yu Zhang and Ivor W. Tsang},
-      year={2022},
-      eprint={2111.10603},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2111.10603}, 
+@article{
+lin2022reasonableeffectivenessrandomweighting,
+title={Reasonable Effectiveness of Random Weighting: A Litmus Test for Multi-Task Learning},
+author={Baijiong Lin and Feiyang Ye and Yu Zhang and Ivor Tsang},
+journal={Transactions on Machine Learning Research},
+issn={2835-8856},
+year={2022},
+url={https://openreview.net/forum?id=jjtFD8A1Wx},
+note={}
 }
 
 @inproceedings{unitary2022kurin,
@@ -449,24 +523,31 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
       url={https://arxiv.org/abs/2209.11379}, 
 }
 
-@misc{li2025datamixingoptimizationsupervised,
-      title={Data Mixing Optimization for Supervised Fine-Tuning of Large Language Models}, 
-      author={Yuan Li and Zhengzhong Liu and Eric Xing},
-      year={2025},
-      eprint={2508.11953},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2508.11953}, 
+@InProceedings{li2025datamixingoptimizationsupervised,
+  title = 	 {Data Mixing Optimization for Supervised Fine-Tuning of Large Language Models},
+  author =       {Li, Yuan and Liu, Zhengzhong and Xing, Eric},
+  booktitle = 	 {Proceedings of the 42nd International Conference on Machine Learning},
+  pages = 	 {35419--35437},
+  year = 	 {2025},
+  editor = 	 {Singh, Aarti and Fazel, Maryam and Hsu, Daniel and Lacoste-Julien, Simon and Berkenkamp, Felix and Maharaj, Tegan and Wagstaff, Kiri and Zhu, Jerry},
+  volume = 	 {267},
+  series = 	 {Proceedings of Machine Learning Research},
+  month = 	 {13--19 Jul},
+  publisher =    {PMLR},
+  pdf = 	 {https://raw.githubusercontent.com/mlresearch/v267/main/assets/li25bh/li25bh.pdf},
+  url = 	 {https://proceedings.mlr.press/v267/li25bh.html},
+  abstract = 	 {Optimizing data mixtures for supervised fine-tuning (SFT) of large language models (LLMs) is critical for developing general-purpose models, yet this area remains underexplored. In this paper, we frame data mixing as an optimization problem and introduce a novel method designed to minimize validation loss. Our approach parametrizes the loss by modeling effective data transferred and leveraging scaling laws for fine-tuning. By experimenting with various small-scale data mixtures, we fit these parameters and derive the optimal weights. We provide both mathematical proofs and empirical results demonstrating that our algorithm achieves excellent overall and individual performance across all domains. Through controlled experiments, we show that models trained with our optimized weights perform on par with those using optimal weights determined via grid search, with per-domain loss only 0.66% higher than the best domain loss from grid search on average. Additionally, we show that reweighting popular SFT datasets using our method improves both validation loss and downstream performance. Finally, we discuss how our method can generalize to guide data selection for domain-specific models and provide insights into SFT.}
 }
 
-@misc{liu2025regmixdatamixtureregression,
-      title={RegMix: Data Mixture as Regression for Language Model Pre-training}, 
-      author={Qian Liu and Xiaosen Zheng and Niklas Muennighoff and Guangtao Zeng and Longxu Dou and Tianyu Pang and Jing Jiang and Min Lin},
-      year={2025},
-      eprint={2407.01492},
-      archivePrefix={arXiv},
-      primaryClass={cs.CL},
-      url={https://arxiv.org/abs/2407.01492}, 
+@inproceedings{liu2025regmixdatamixtureregression,
+ author = {Liu, Qian and Zheng, Xiaosen and Muennighoff, Niklas and Zeng, Guangtao and Dou, Longxu and Pang, Tianyu and Jiang, Jing and Lin, Min},
+ booktitle = {International Conference on Learning Representations},
+ editor = {Y. Yue and A. Garg and N. Peng and F. Sha and R. Yu},
+ pages = {38305--38339},
+ title = {RegMix: Data Mixture as Regression for Language Model Pre-training},
+ url = {https://proceedings.iclr.cc/paper_files/paper/2025/file/5f67d864aae6115374fed7beddd119e0-Paper-Conference.pdf},
+ volume = {2025},
+ year = {2025}
 }
 
 @misc{albalak2023efficientonlinedatamixing,
@@ -479,14 +560,15 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
       url={https://arxiv.org/abs/2312.02406}, 
 }
 
-@misc{jiang2024adaptivedataoptimizationdynamic,
-      title={Adaptive Data Optimization: Dynamic Sample Selection with Scaling Laws}, 
-      author={Yiding Jiang and Allan Zhou and Zhili Feng and Sadhika Malladi and J. Zico Kolter},
-      year={2024},
-      eprint={2410.11820},
-      archivePrefix={arXiv},
-      primaryClass={cs.LG},
-      url={https://arxiv.org/abs/2410.11820}, 
+@inproceedings{jiang2024adaptivedataoptimizationdynamic,
+ author = {Jiang, Yiding and Zhou, Allan and Feng, Zhili and Malladi, Sadhika and Kolter, Zico},
+ booktitle = {International Conference on Learning Representations},
+ editor = {Y. Yue and A. Garg and N. Peng and F. Sha and R. Yu},
+ pages = {58014--58037},
+ title = {Adaptive Data Optimization: Dynamic Sample Selection with Scaling Laws},
+ url = {https://proceedings.iclr.cc/paper_files/paper/2025/file/923285deb805c3e14e1aeebc9854d644-Paper-Conference.pdf},
+ volume = {2025},
+ year = {2025}
 }
 
 @inproceedings{dong-etal-2024-abilities,
@@ -523,4 +605,14 @@ url={https://openreview.net/forum?id=sZGZJhaNSe}
       archivePrefix={arXiv},
       primaryClass={cs.LG},
       url={https://arxiv.org/abs/1204.4710}, 
+}
+
+@misc{gu2026actorcuratorcoadaptivecurriculumlearning,
+      title={Actor-Curator: Co-adaptive Curriculum Learning via Policy-Improvement Bandits for RL Post-Training}, 
+      author={Zhengyao Gu and Jonathan Light and Raul Astudillo and Ziyu Ye and Langzhou He and Henry Peng Zou and Wei Cheng and Santiago Paternain and Philip S. Yu and Yisong Yue},
+      year={2026},
+      eprint={2602.20532},
+      archivePrefix={arXiv},
+      primaryClass={cs.LG},
+      url={https://arxiv.org/abs/2602.20532}, 
 }

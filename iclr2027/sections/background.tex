@@ -1,7 +1,7 @@
 \section{Background}
 \label{sec:bg_allocation}
 
-In LLM multi-task post-training, we are interested in optimizing a policy $\pi$ on $K\ge 2$ tasks for a budget of $T$ rounds. Task $k$ has input distribution $\mathcal{X}_k$ and reward $r_k$, with rewards sharing a common scale. Let $J_k(\pi)$ denote the expected return of policy $\pi$ on task $k$, and let
+In multi-task post-training, we are interested in optimizing a policy $\pi$ on $K\ge 2$ tasks for a budget of $T$ rounds. The task $k$ has input distribution $\mathcal{X}_k$ and reward $r_k$, with rewards sharing a common scale. Let $J_k(\pi)$ denote the expected return of policy $\pi$ on task $k$, and let
 $J(\pi)\coloneqq\sum_{k=1}^K J_k(\pi)$.
 At round $t$, the learner splits a fixed-size mini-batch according to an \textit{allocation}
 \[
@@ -13,22 +13,22 @@ p\in\mathbb{R}_+^K:
 \right\},
 \]
 and takes one update of the underlying RL algorithm, which is held fixed. Thus, $p_1,\ldots,p_T$ are the only control variables.
-Let $\pi_{t+1}(p)$ denote the policy obtained by applying the round-$t$ update to $\pi_t$ under allocation $p$, and let $\pi_{t+1}\coloneqq\pi_{t+1}(p_t)$. We define the \textit{task-wise one-step policy improvement}
+Let $\pi_{t+1}(p)$ denote the policy obtained by applying the round-$t$ update to $\pi_t$ under task allocation $p$, which we also abbreviate as $\pi_{t+1}\coloneqq\pi_{t+1}(p_t)$. We define the \textit{task-wise one-step policy improvement}
 \[
 U_{t,k}(p)
 \coloneqq
 J_k(\pi_{t+1}(p))-J_k(\pi_t),
 \]
-and the aggregate improvement
+and the task-aggregated improvement
 $U_t(p)\coloneqq\sum_{k=1}^K U_{t,k}(p)$.
-Total policy improvements across tasks can be telescoped as
+Therefore, total policy improvements across tasks can be telescoped as
 \begin{equation}
 \label{eq:bg_telescope}
-J(\pi_{T+1})-J(\pi_1)
+J(\pi_{T})-J(\pi_0)
 =
 \sum_{t=1}^{T} U_t(p_t).
 \end{equation}
-Maximizing $\sum_{t=1}^T U_t(p_t)$ is therefore the finite-budget policy-improvement objective for multi-task post-training. Two properties of this objective make it difficult to optimize directly. The first is that the shape of $U_{t,k}$ is neither known in advance nor stable across training. All tasks share a single set of parameters, so an update driven by task $j$ also moves the return on task $k$. \textit{A priori} parametric description of the allocation-to-improvement mapping is unlikely to be reliable over a whole run. Second, the aggregate $U_t$ is indifferent to \emph{which} task supplies the improvement, so its maximizer concentrates the budget on whichever tasks return the largest immediate gain and starves the remainder, which betrays the intent of multi-task post-training.
+Maximizing $\sum_{t=1}^T U_t(p_t)$ is therefore a finite-budget policy-improvement objective. Two properties of this objective make it difficult to optimize directly. The first is that the shape of $U_{t,k}$ is neither known in advance nor stable across training. All tasks share a single set of parameters, so an update driven by task $i$ also moves the return on task $j$. \textit{A priori} parametric description of the allocation-to-improvement mapping, such as those in \cite{chen2025aioli}, is unlikely to be reliable over a whole run. Second, the aggregate $U_t$ is indifferent to \emph{which} task supplies the improvement, so its maximizer concentrates the budget on whichever tasks return the largest immediate gain and starves the remainder, which betrays the intent of multi-task post-training.
 
 
 

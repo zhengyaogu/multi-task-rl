@@ -1,14 +1,14 @@
 \section{Primal-Dual Curvature Matching} \label{sec:method}
 As discussed in \Cref{sec:bg_allocation}, naively maximizing the total policy improvement in \Cref{eq:bg_telescope} can lead to skewed development
-over tasks that should otherwise be treated equally.  
+over tasks that should otherwise be treated equally (see \Cref{sec:ablation}).  
 We propose the following constraint that prevents any task from falling behind
 what would be achieved by a uniform allocation $u = (\frac{1}{K},\ldots,\frac{1}{K})$ by a threshold $\epsilon>0$:
 \begin{equation} \label{eq:constraint_uniform_baseline}
 \sum_{t = 1}^T U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \epsilon, \quad \forall k\in[K].
 \end{equation}
-\Cref{eq:constraint_uniform_baseline} marks a departure from the parametric constraint used in previous work~\citep{chen2025aioli,ye2025datamixinglawsoptimizing,kang2025autoscalescaleawaredatamixing}, by enforcing an upper-limit on the step-wise allocation deficit. In practice, estimating $U_{t, k}(u)$ requires a parallel run with uniform allocation $u$, which is cost-prohibitive. We relax the parametric assumptions in recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} to one in which the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We further validate this assumption in Appendix~\ref{app:concavity}. 
+\Cref{eq:constraint_uniform_baseline} enforces an upper-limit on the cumulative counterfactual lag. In practice, estimating $U_{t, k}(u)$ requires a parallel run with uniform allocation $u$, which is cost-prohibitive. We relax the parametric assumptions in recent work~\citep{ye2025datamixinglawsoptimizing,chen2025aioli,kang2025autoscalescaleawaredatamixing} to one in which the policy-improvement surface with respect to mixture allocation is approximately concave along linear interpolation paths. We validate this assumption empirically in Appendix~\ref{app:concavity}. 
 
-\begin{assumption}[Directional concavity of task response]
+\begin{assumption}[Directional concavity of improvement response]
 \label{asm:concavity}
 For every task $k\in[K]$ and iteration $t$, the task-wise utility $U_{t,k}$ admits a
 supergradient $g_{t,k}=\nabla U_{t,k}(p_t)$ with respect to the sampling distribution
@@ -17,72 +17,71 @@ $p_t$, so that
 U_{t, k}\left( u \right) - U_{t, k}(p_t) \leq \langle g_{t, k}, u - p_t \rangle .
 \end{equation}
 \end{assumption}
-\Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being a more conservative constraint. This leads to the following constrained optimization problem:
+\Cref{eq:constraint_uniform_baseline} would be satisfied if we instead impose the RHS of \Cref{eq:constraint_upper_bound}, albeit being more restrictive. This leads to the following constrained optimization problem:
 \begin{equation} \label{eq:constrained_optimization_problem}
 \begin{aligned}
-\max_{p_t \in \Delta_K} & \quad \sum_{t=0}^{T-1} U_t(p_t) \\
-\text{s.t.} & \quad \sum_{t = 1}^T \langle g_{t, k}, u - p_t \rangle \leq \epsilon, \quad \forall k\in[K], \forall t\in[T].
+\max_{p_1, \dots, p_{T} \in \Delta_K} & \quad \sum_{t=1}^{T} U_t(p_t) \\
+\text{s.t.} & \quad \sum_{t = 1}^T \langle g_{t, k}, u - p_t \rangle \leq \epsilon, \quad \forall k\in[K].
 \end{aligned}
 \end{equation}
 
-\paragraph{Remark.} While $g_{t, k}$ in principle needs to be estimated using counterfactual allocations as well, we further assume that $U_{t, k}$ is approximately static locally and estimate $g_{t,k}$ by regressing on the values of $U_{t, k}$ of previous $H$ steps (\Cref{sec:curv_est}).
+\paragraph{Remark.} While $g_{t, k}$ in principle needs to be estimated using counterfactual allocations as well, this formulation allows us to assume that $U_{t, k}$ is approximately static around a given $t$ and to estimate $g_{t,k}$ by regressing on the values of $U_{t, k}$ of previous $H$ steps (see \Cref{sec:curv_est}).
 
 \input{fig/pdcm_main_fig.tex}
 
 \vspace{-0.05in}
 \subsection{Primal-Dual Curvature Matching}
 \vspace{-0.05in}
-To solve Problem~\labelcref{eq:constrained_optimization_problem}, one must optimize an online objective over the probability simplex while satisfying cumulative constraints. This class of problems has been extensively studied using Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. PDMD controls the allocation via an exponential update rule
+\Cref{eq:constrained_optimization_problem} is an online optimization problem with linear constraints, which allows us to employ Primal-Dual Mirror Descent (PDMD)~\citep{Beck2003MirrorDA,mahdavi2011trading,jenatton2015adaptivealgorithmsonlineconvex}. Generally, PDMD guarantees sublinear regret under convex constraints by controlling the allocation via an exponential update rule
 \begin{equation} \label{eq:primal_update}
 p_{t+1,j}
 = 
 \frac{p_{t,j}\exp(\eta_p s_{t,j})}
 {\sum_{\ell=1}^Kp_{t,\ell}\exp(\eta_p s_{t,\ell})},
 \end{equation}
-where $s_{t,j}$ is the corresponding score of task $j$ at iteration $t$. In a generic PDMD formulation, this score combines the gradient of the primal objective with dual-weighted gradients of the constraints. In Problem~\labelcref{eq:constrained_optimization_problem}, however, the task-wise counterfactual constraints are linearized surrogates of the same task-wise utility functions that define the primal objective. Consequently, the task-wise score $s_{t, j}$ is obtained by amplifying the marginal-utility signal in $g_{t, k}$ according to the current lag pressure behind the uniform allocation encoded by $\lambda_t$.
-\begin{equation} \label{eq:dual_weighted_marginal_utility_vectorized}
+where $s_{t, j}$ incorporates both the first-order information $G_t$ of the primal objective~\Cref{eq:bg_telescope} and a dual variable $\lambda_t$ that accumulates historical lag.
+\begin{align}
+& G_t = \left[ g_{t, 1}, \dots, g_{t, K} \right]^T, 
+\qquad 
+\text{where }
+g_{t, k} = \nabla U_{t, k}(p_t) \quad \forall k \in [K]
+\label{eq:dual_weighted_marginal_utility_vectorized} \\
+& \lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon / T \right) \right]_+,\qquad 
+\text{where }  [x]_+ := \max\{x, 0\}
+\label{eq:dual_update}
+\end{align}
+$G_t$ contains local information on how changes in the allocation $p_t$ affect task-wise policy improvement $U_{t, k}$ and $\lambda_{t}$ encodes how much Equation~\ref{eq:constraint_upper_bound} has been violated. The exponential logits $s_{t}$ are then combined in the following vectorized form
+\begin{equation} \label{eq:s_combined}
 s_t
 =
-G_t^\top \left( \mathbf{1} + \lambda_t \right)
-\qquad
-\text{, where }
-G_t
-    =
-    \begin{bmatrix}
-    g_{t,1}^{\top}\\
-    \vdots\\
-    g_{t,K}^{\top}
-    \end{bmatrix}
+G_t^\top \mathbf{1} + G_t^\top \lambda_t
 \end{equation}
-Here, $G_t$ represents the Jacobian of the utility functions with respect to the allocation. We discuss a variant of PDCM where $G_t$ is diagonal in Appendix~\ref{app:diagonal}. 
+where the term $G_t^\top \mathbf{1}$ captures the first-order marginal utility of each allocation coordinate, while
+$G_t^\top \lambda_t$ corrects for lag using a dual-weighted marginal utility.
+% the second-order control as it encapsulates the gradient information $g_{t, k}$ twice. 
+We summarize the algorithm in \Cref{alg:pdcm_jacobian}. 
+
+\paragraph{Remark.} We note that as we chose \Cref{eq:constraint_upper_bound} to be the constraint, $G_t$ becomes the only quantity we need to estimate throughout the algorithm, a crucial design for the algorithm's tractability and simplicity. Because of this reliance on $G_t$, we name this algorithm \textbf{Primal-Dual Curvature Matching} (PDCM)\footnote{We recognize that it could be confusing to name the algorithm ``curvature matching'' when $G_t$ is just the first-order information of $U_{t, k}$. Meanwhile, curvature is conventionally used to refer to second-order information. We argue that $G_t$ is the second-order information of the total improvement $J(\pi_{T}) - J(\pi_0)$.}. The adaptive allocation in PDCM is intended to exploit temporal variation in task-wise marginal utility. The following result shows that this adaptivity remains asymptotically competitive with any fixed feasible allocation, including the uniform mixture, while simultaneously controlling cumulative task-wise lag.
 
 \input{pdcm_jacobian_alg.tex}
 
-The lag pressure $\lambda_t$ is accumulated over iterations through projected dual ascent. Specifically, for each task $k$,
-\begin{equation} \label{eq:dual_update}
-\lambda_{t+1, k} = \left[ \lambda_{t, k} + \eta_\lambda \left( \langle g_{t, k}, u - p_t \rangle - \epsilon \right) \right]_+,
-\end{equation}
-where $\eta_\lambda$ is the dual step size and $[\cdot]_+$ denotes the projection onto the non-negative plane. The dual update increases the lag pressure for tasks that are underperforming relative to the imaginery uniform baseline, thereby influencing future allocations to favor those tasks. We dub the resulting algorithm \textit{Primal-Dual Curvature Matching} (PDCM), which is summarized in \Cref{alg:pdcm_jacobian}.
-
-The adaptive allocation in PDCM is intended to exploit temporal variation in task-wise marginal utility. The following result shows that this adaptivity remains asymptotically competitive with any fixed feasible allocation, including the uniform mixture, while simultaneously controlling cumulative task-wise lag.
-
 \begin{theorem}[Constrained no-regret of PDCM]
 \label{thm:pdcm_no_regret}
-Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable and Assumption~\ref{asm:concavity} holds. Let
+Suppose that each task-wise utility $U_{t,k}$ is twice-differentiable; and its Jacobian and the cumulative dual lag $\lambda_t$ are bounded. Let
 \[
 p_T^\star
 \in
-\arg\max_{p\in\mathcal P_T}
+\arg\max_{p\in \Delta^K}
 \sum_{t=1}^T U_t(p)
 \]
 denote the best fixed feasible allocation in hindsight. If
-$\eta_p,\eta_\lambda=\Theta(T^{-1/2})$, then PDCM satisfies
+$\eta_p,\eta_\lambda=\Theta(T^{-1/2})$, then update rule \Cref{eq:primal_update} satisfies
 \begin{equation}
 \sum_{t=1}^T
 \left[
 \sum_{k=1}^K U_{t,k}(p_T^\star) - \sum_{k=1}^K U_{t,k}(p_t)
 \right]
-=
+\leq
 O(\sqrt{T}),
 \end{equation}
 while, for every task $k$,
@@ -90,18 +89,20 @@ while, for every task $k$,
 \left[
 \sum_{t=1}^T
 \left(
-U_{t,k}(u)-U_{t,k}(p_t)-\epsilon_{t,k}
+U_{t,k}(u)-U_{t,k}(p_t)-\epsilon / T
 \right)
 \right]_+
-=
+\leq
 O(\sqrt{T}).
 \end{equation}
-Consequently, both the average regret and the average excess counterfactual lag vanish at rate $O(T^{-1/2})$. We provide a proof of in Appendix~\ref{app:theory}.
+Consequently, both the average regret and the average excess counterfactual lag vanish at rate $O(T^{-1/2})$. We provide a proof in Appendix~\ref{app:theory}.
 \end{theorem}
+
+What is left is the estimation of the policy improvement gradient $\hat{G}_t$. For that, we need a fast and tractable way of estimating the policy improvement $U_{t, k}$ and its gradient with respect to $p_t$.
 
 \subsection{Policy Improvement Estimation}
 \vspace{-0.05in}
-The performance difference lemma~\citep{Kakade2002ApproximatelyOA} expresses the task-wise policy improvement $U_{t,k}$ as an expectation, over rollouts drawn from $\pi_t$, of the advantage $A_{\pi_t}$ reweighted by the importance ratio $\pi_{t+1}/\pi_t$. This makes $U_{t,k}$ a convenient target for off-policy evaluation~\citep{ope2000}: we reuse the rollouts already generated for the training batch and estimate the task-wise policy improvement as
+The performance difference lemma~\citep{Kakade2002ApproximatelyOA} expresses the task-wise policy improvement $U_{t,k}$ as an expectation, over rollouts drawn from $\pi_t$, of the advantage $A_{\pi_t}$ reweighted by the importance ratio $\pi_{t+1}/\pi_t$. This makes $U_{t,k}$ a convenient target for off-policy evaluation~\citep{ope2000,gu2026actorcuratorcoadaptivecurriculumlearning}: we reuse the rollouts already generated for the training batch and estimate the task-wise policy improvement as
 \begin{equation} \label{eq:policy_improvement_estimation}
 \widehat U_{t,k}
 =
@@ -110,7 +111,7 @@ The performance difference lemma~\citep{Kakade2002ApproximatelyOA} expresses the
 {\pi_{t}(y_i\mid x_i)}
 A_{\pi_{t}}(y_i\mid x_i),
 \end{equation}
-where $(x_i, y_i)$ are the $i$-th state-action pair in of task $k$ in the training batch on step $t$. We estimate $A_{\pi_t}$ using the z-score estimator used by group-based RL algorithms such as GRPO~\citep{grpo2024} and GSPO~\citep{gspo2025}.
+where $(x_i, y_i)$ are the $i$-th state-action pair for task $k$ in the training batch on step $t$, $N_k$ is the number of task-$k$ samples in the current training batch. We estimate $A_{\pi_t}$ using the z-score estimator used by group-based RL algorithms such as GRPO~\citep{grpo2024} and GSPO~\citep{gspo2025}.
 
 Compared to the standard RL post-training loop, this estimation only requires an additional forward pass of the improved policy $\pi_{t+1}$ to compute the importance sampling ratio $\frac{\pi_{t+1}(y_i\mid x_i)}{\pi_{t}(y_i\mid x_i)}$. This is a negligible overhead compared to the cost of rollout generation or backpropagation.
 
@@ -120,7 +121,7 @@ Compared to the standard RL post-training loop, this estimation only requires an
 \vspace{-0.05in}
 
 \label{sec:curv_est}
-What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating such quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
+What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimating this quantity also requires a counterfactual evaluation of the policy improvement around $p_t$. However, by maintaining a history of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=1}^{t-1}$ and allocations $\{p_\tau\}_{\tau=1}^{t-1}$, we can approximate the allocation-response Jacobian $g_{t, k}$ by local regression. We opt for the Theil-Sen estimator~\citep{Theil1992} for its robustness to noisy $\hat{U}_{t, k}$ when the allocation $p_{t, k}$ is low.
 \vspace{-0.01in}
 \begin{equation} \label{eq:theil-sen}
 \widehat g_{t,kj}
@@ -128,5 +129,11 @@ What is left is to estimate the allocation-response Jacobian $g_{t, k}$. Estimat
 \operatorname*{median}_{\substack{1\le a<b\le t-1\\ |p_{b,j}-p_{a,j}|>\delta}}
 \frac{\widehat U_{b,k}-\widehat U_{a,k}}{p_{b,j}-p_{a,j}} .
 \qquad
-\forall k\in[K], j\in[K].
+\forall k\in[K], j\in[K],
 \end{equation}
+where \(\delta>0\) is a minimum allocation-separation threshold used to avoid unstable slopes. Additionally, to prevent stale $p_t$, we apply dithering with decaying strength to
+$p_t$ before sampling (see Line~\ref{alg:dirchlet}, Algorithm~\ref{alg:pdcm_jacobian}).
+Here, $p_t$ denotes the controller's nominal allocation, while
+$\tilde{p}_t$ denotes the dithered allocation actually used to sample
+the training batch.
+%Additionally, to prevent high variance estimation due to lack of exploration by the algorithm, we apply decaying Dirchelet noises to $p_{t}$ before sampling (see Line~\ref{alg:dirchlet}, \Cref{alg:pdcm_jacobian}).

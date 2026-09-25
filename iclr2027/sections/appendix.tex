@@ -1,7 +1,7 @@
 \section{Data}
 \label{app:data}
 \paragraph{Nemo-Gym.}~\citep{nemogym}
-We selected four heterogeneous tasks served from the NeMo-Gym servers, some requiring tool-use or multi-turn capabilities, some do not.
+We selected four heterogeneous tasks served from the NeMo-Gym servers, some requiring tool use or multi-turn capabilities and others not.
 \textbf{\texttt{IF}} draws its training prompts from the WildChat-1M dataset~\citep{zhao2024wildchat1mchatgptinteraction} with instructions from the Open-Instruct code base~\citep{ahmad2025opencodeinstructlargescaleinstructiontuning}, and is evaluated on the held-out IF-Bench~\citep{ifbench}. \textbf{\texttt{code\_gen}} contains competitive coding challenges from
 NVIDIA's OpenCodeReasoning~\citep{ahmad2025opencodereasoningadvancingdatadistillation} dataset. This dataset is served with Nemo-Gym's single-turn verification engine \texttt{code\_gen}.
 \textbf{\texttt{xlam\_fc}}~\citep{zhang2024xlamfamilylargeaction} is an API/function calling dataset in xLAM format.
@@ -13,14 +13,14 @@ Tab.~\ref{tab:agentic} lists the per-task train and test sizes.
 Our reasoning mixture is procedurally generated with scripts offered by Reasoning-Gym~\citep{reasoninggym}.
 Each task is instantiated at three difficulty levels (easy, medium, and hard) with 30000 training and 600 test problems. We describe the individual tasks below.
 \textbf{\texttt{ARC-1D}} is an abstract pattern-induction puzzle where the agent infers the grid transformation rule from examples.
-\textbf{\texttt{countdown}} is a numbers game in which the agent combines given numbers and fixed set of operations to hit a target.
-\textbf{\texttt{zebra}} a logic game where you use clues and deduction to match attributes across different colored houses.
+\textbf{\texttt{countdown}} is a numbers game in which the agent combines given numbers and a fixed set of operations to hit a target.
+\textbf{\texttt{zebra}} is a logic game where you use clues and deduction to match attributes across different colored houses.
 \textbf{\texttt{word\_sorting}} is an alphabetical word-sorting task.
 In \textbf{\texttt{puzzle24}}, one needs to combine four numbers and basic arithmetic operations to make 24. 
 In \textbf{\texttt{manipulate\_matrix}}, one must apply given grid operations in sequence to reach a given state.
 App.~\ref{app:rg-generation} reports the complete generation configurations.
 
-\begin{table}[t]
+\begin{table}[htbp]
 \centering
 \small
 \setlength{\tabcolsep}{8pt}
@@ -111,18 +111,65 @@ and one mixture, so it speaks to local rather than global concavity of the task-
 surface.
 
 
+\section{Hyperparameters}
+\label{app:hyper}
+Table~\ref{tab:pdcm-hparams} reports the hyperparameters for our two \textsc{PDCM} runs: the mix4
+(IF-split) run with the full-Jacobian sampler and the aczpwm run with the scalar sampler over difficulty
+tiers. Both use Qwen3-4B with GSPO, learning rate $10^{-6}$, $n{=}8$ rollouts per prompt, and $600$
+steps; they differ mainly in the curvature object (full $K\!\times\!K$ Jacobian vs.\ per-arm scalar),
+the number of controller arms ($K{=}4$ domains vs.\ $K{=}16$ difficulty tiers), and the sequence and
+batch budget of the two task suites. Full settings are given in the table.
+
+
+% Hyperparameter table for two PDCM runs. Requires \usepackage{booktabs}.
+% Col A: mix4-ifsplit PDCM (full-Jacobian sampler); Col B: aczpwm PDCM (scalar sampler, difficulty-tier fold).
+\begin{table}[t]
+\centering
+\small
+\caption{Hyperparameters for the two \textsc{PDCM} runs: the mix4 (IF-split) run with the full-Jacobian
+sampler, and the Reasoning-Gym run with the scalar sampler over difficulty tiers. Values are shared
+unless noted; the two differ mainly in the curvature object (full $K\times K$ Jacobian vs.\ per-arm scalar),
+the fold granularity ($K$), and the sequence/batch budget of the two task suites.}
+\label{tab:pdcm-hparams}
+\begin{tabular}{l l l}
+\toprule
+Hyperparameter & Nemo-Gym (Jacobian) & Reasoning-Gym \\
+\midrule
+Primal step $\eta_p$      & 0.1               & 0.3 \\
+Dual step $\eta_\lambda$        & 0.01              & 0.05 \\
+Window $H$                & 10                & 10 \\
+Dither $\gamma$ (init/floor) & 0.20 / 0.10    & 0.20 / 0.10 \\
+Dither anneal steps       & 400               & 400 \\
+Lag budget $\varepsilon$  & 0.1               & 0.1 \\
+Warmup steps              & 20                & 40 \\
+\addlinespace
+\multicolumn{3}{l}{\emph{Optimization}} \\
+Learning rate             & 1e-6              & 1e-6 \\
+LR warmup steps           & 10                & 10 \\
+Weight decay              & 0.1               & 0.1 \\
+Grad clip                 & 1.0               & 1.0 \\
+Train batch size          & 128               & 256 \\
+PPO mini-batch            & 64                & 64 \\
+Total training steps      & 600               & 600 \\
+\addlinespace
+\multicolumn{3}{l}{\emph{Sequence / rollout}} \\
+Max prompt / response len & 8192 / 8192       & 2048 / 4096 \\
+vLLM max-model-len        & 24576             & 6144 \\
+\bottomrule
+\end{tabular}
+\end{table}
+\newpage
+
+
 \section{Diagonal-Jacobian PDCM}
 \label{app:diagonal}
+
 
 \input{fig/diag_table.tex}
 
 \Cref{alg:pdcm_jacobian} estimates the full allocation-response Jacobian $G_t$, whose entry
 $g_{t,kj}$ records how task $k$'s improvement responds to task $j$'s share of the batch. A
-simpler variant keeps only the diagonal. It is worth setting out on its own, both because it is
-the regime in which our theoretical results are stated and because it is the variant whose
-signal we can estimate most reliably.
-
-The restriction amounts to assuming that each task's improvement depends on the allocation only
+simpler variant keeps only the diagonal. The restriction amounts to assuming that each task's improvement depends on the allocation only
 through that task's own share,
 \begin{equation}
 U_{t,k}(p) \;=\; U_{t,k}(p_k), \qquad k\in[K],
@@ -164,7 +211,7 @@ pressure discussed in \Cref{sec:scaling}. The diagonal entries, by contrast, are
 precisely the variation the primal update generates on its own. The probe of
 \Cref{app:concavity} measures this univariate response directly, sweeping $p_{t,k}$ with the
 remaining mass held even, and is therefore a test of \Cref{asm:concavity} in exactly the
-diagonal form used by \Cref{thm:no-regret}.
+diagonal form used by \Cref{thm:pdcm_no_regret}.
 
 \Cref{tab:diag-ablation} compares the two variants on the four Nemo-Gym tasks. Both clear the
 uniform baseline comfortably, and their totals are close: the diagonal variant trails the full

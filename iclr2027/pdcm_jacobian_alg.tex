@@ -5,10 +5,10 @@
 \REQUIRE
 Number of tasks $K$; horizon $T$;
 primal step size $\eta_p>0$;
-dual step size $\eta_d>0$;
+dual step size $\eta_\lambda>0$;
 constraint budget $\epsilon\ge 0$;
-dual bound $\Lambda>0$.
-\STATE Initialize $p_0 \gets u$, $\lambda_0 \gets \mathbf{0}$ and initial policy $\pi_0$.
+Dithering strength schedule $\{\nu_t\}$, where $\nu_t \in [0, 1]$.
+\STATE Initialize $p_1 \gets u$, $\lambda_1 \gets \mathbf{0}$ and initial policy $\pi_0$.
 \STATE Maintain a history of size $H$ of task-wise improvement vectors $\{\widehat U_\tau\}_{\tau=t-H}^{t-1}$ and allocation-response Jacobians $\{\widehat G_\tau\}_{\tau=t-H}^{t-1}$ and allocations $\{p_\tau\}_{\tau=t-H}^{t-1}$.
 
 \FOR{$t=1,\ldots,T$}
@@ -25,12 +25,12 @@ dual bound $\Lambda>0$.
 
     \STATE Estimate the Jacobian $\widehat G_t$ by \Cref{eq:theil-sen}. \COMMENT{\textcolor{blue}{Applies Theil-Sen regression to estimate first-order sensitivity.}}
 
-    \STATE Compute the primal scores $s_t$ by \Cref{eq:dual_weighted_marginal_utility_vectorized}.
+    \STATE Compute the primal scores $s_t$ by \Cref{eq:s_combined}.
+    \COMMENT{Combine primal and dual weights.}
 
     \STATE Update the primal allocation $p_{t+1}$ by entropic mirror ascent using \Cref{eq:primal_update}.  \COMMENT{\textcolor{blue}{Exponential weight update.}}
-
+    \STATE Add Dirchelet noise $\Tilde{p}_t = (1 - \nu)p_t + \nu\alpha,  \quad \text{where } \alpha \sim \mathrm{Dirchelet}(1)$ \label{alg:dirchlet}
     \STATE Update the dual variables $\lambda_{t+1}$ by projected gradient ascent using \Cref{eq:dual_update}.
 \ENDFOR
 \end{algorithmic}
 \end{algorithm}
-\vspace{-\intextsep}
